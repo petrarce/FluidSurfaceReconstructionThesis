@@ -1,0 +1,94 @@
+\documentclass[
+	11pt, 
+	DIV10,
+	a4paper, 
+	oneside, 
+	headings=normal, 
+	captions=tableheading,
+	final, 
+	numbers=noenddot
+]{scrartcl}
+
+\usepackage{lipsum}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{subcaption}
+\usepackage{listings,amsfonts}
+\usepackage{pdfpages}
+\usepackage[utf8]{inputenc}
+\usepackage[export]{adjustbox}
+\usepackage[]{algorithm2e}
+\usepackage{algorithmic}
+\usepackage{amssymb}
+
+\SetAlFnt{\small}
+\algsetup{linenosize=\tiny}
+
+\title{General notes during thesis work}
+\author{Iohannes Folbort}
+\begin{document}
+
+Algorythm of grid-based blurring\newline
+\begin{algorithm}[H]
+\KwData {OldLevelSet - given level set values, UserSmoothingFactor - smoothing factor, provided from user, FluidParticlesCount - number of particles in the neighbourhood of grid cell}
+\KwResult{BlurredLevelSet}
+\Begin{
+	$maxNeighbourCount = \dfrac{CellSupportRadius^3}{FluidParticleRadius^3}$\newline
+	\For {$vert \in GridVertices$} {
+
+		$neighbors = findCellNeighbors(vert)$\newline
+		$newLevelSetValue = OldLevelSet[vert]$\newline
+		\For { $neigborVert \in neighbors$} {
+			$newLevelSetValue = newLevelSetValue + OldLevelSet[neigborVert]$\newline
+		}
+		$newLevelSetValue = \dfrac{newLevelSetValue}{neighbors.size()} + 1$\newline
+		$factor = min(1, UserSmoothingFactor \cdot \dfrac{FluidParticlesCount[vert]}{maxNeighbourCount}$\newline
+		$BlurredLevelSet[vert] = OldLevelSet[vert] \cdot (1 - factor) + factor \cdot newLevelSetValue$\newline
+	}
+	$return BlurredLevelSet$
+}
+\end{algorithm}
+
+
+Algorythm of grid-based Mls smoothing\newline
+\begin{algorithm}[H]
+\KwData {OldLevelSet - given level set values, SimVal- similarity value, MCgrid - marching cubes grid}
+\KwResult{NewLevelSet}
+\Begin{
+	\For {$vertice \in MCgrid$} {
+		verticeCurvature = curvature(vertice);\newline
+		\If {$|verticeCurvature| < 0.5$}{
+			kernelOffset *= 2;\newline
+			kernelSize *= 2;\newline
+		} \ElseIf {$|verticeCurvature| < 1.5$} {
+			kernelSize *= 2;\newline
+		}
+
+		samples = getNeighbors(vertice, kernelSize, kernelOffset, SimVal)\newline
+		NewLevelSet[vertice] = applyMlsCorrection(vertice, samples, kernelSize, kernelOffset)\newline
+
+	}
+}
+\end{algorithm}
+
+getNeighbors Algorythm of grid-based Mls smoothing\newline
+\begin{algorithm}[H]
+\KwData {Vertice - vertice around which neighborhood is found, SimVal- threshold of how far sdf value should be for neighbor vertices, KernelSize, KernelOffset}
+\KwResult{NeighborVertices}
+\Begin{
+	baseSdf = getSDFvalue(Vertice);\newline
+	\For {$i, j, k \in -kernelSize, kernelSize$} {
+		neighborVertice = baseCell + Vector(i * kernelOffset, j * kernelOffset, k * kernelOffset);\newline
+		sdfValue = getSDFvalue(neighborVertice);\newline
+		\If {$|sdfValue - baseSdf| > SimVal$} {
+			continue;\newline
+		}
+		$NeighborVertices.push_back(neighborVertice)$
+	}
+	return NeighborVertices\newline
+}
+\end{algorithm}
+
+
+
+\end{document}
