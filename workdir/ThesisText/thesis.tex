@@ -1,6 +1,12 @@
 \documentclass{thesis}
 
 \usepackage{rlipsum} % Only needed for Lorem Ipsum dummy text.
+\usepackage{algorithm,algpseudocode}
+\usepackage{array}
+
+\newenvironment{conditions}
+  {\par\vspace{\abovedisplayskip}\noindent\begin{tabular}{>{$}l<{$} @{${}={}$} l}}
+  {\end{tabular}\par\vspace{\belowdisplayskip}}
 
 \thesisTitle{An Improved Approach to Manufacturing the Perfect Krabby Patty}
 \thesisType{Master Thesis}
@@ -16,8 +22,9 @@
 \mainmatter
 \input{introduction.tex}
 \input{related-work.tex}
+\input{MethodsUsed.tex}
 \begin{appendices}
-\input{sample-appendix.tex}
+\input{appendix.tex}
 \end{appendices}
 \cleardoublepage
 

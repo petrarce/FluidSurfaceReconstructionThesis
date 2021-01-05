@@ -1,0 +1,60 @@
+This is a thesis content
+
+Fluid surface reconstruction 
+
+1. Introduction
+	Description of the reconstruction
+	Description of the problem to be solved
+
+2. Related Works
+	Zhu Bridson method
+		Pros/Cons
+	Density based reconstruction
+		Pros/Cons
+	Solenthiler method
+		Description/Pros/Cons
+	Anisotropic kernels method
+		Description/Pros/Cons 
+
+3. Research framework
+	Architecture
+	Methods implemented 
+		DencityBased
+		Zhu/Bridson 
+		Solenthiler
+
+4. Blur smoothing method
+	Motivation
+	General purpose blurring
+	Algorithm
+	Parameters
+		Kernel size
+		Kernel offset
+		Kernel depth
+		Smoothing factor
+		Blur iterations
+	Results
+
+5. Mls reconstruction
+	Motivation
+	Introduction to MLS
+	Algorithm
+	Parameter description and adjustment
+		Kernel size
+		Kernel offset
+		SDF similarity threshold
+	Results
+
+6. Comparison of Blur vs Mls reconstruction
+	Surface smoothing
+	Complexity
+	Runtime
+
+7. Future works
+
+Appendix
+	MLS
+	Marching Cubes
+	Gaussian blur
+
+9. Bibliography

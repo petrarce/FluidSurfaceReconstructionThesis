@@ -1,0 +1,57 @@
+\chapter{Research framework}
+Majority of the most popular  reconstruction methods are using level set methods for reconstruction of the fluid surface mesh. Given fluid particle displacement information, particle densities and other SPH information this methods are computing scalar distance field (SDF) values for previously defined 3D grid domain. After computation of the SDF values this methods apply marching cubes algorithm to construct a fluid surface mesh.
+Thus  smoothing algorithms, described in this thesis is designed such that it can be applied on the reconstruction algorithms with such infrastructure.
+
+
+For extended testing of the smoothing algorithms next reconstruction methods were used:
+\begin{itemize}
+  \item \emph{Density based reconstruction} described in \cite{DencRec}. This method uses SPH particle density information to compute level set scalar field, with the domain of SDF values from $[initialValue, initialValue+1]$.
+  \item \emph{Zhu-Bridson} method, described in \cite{ZhuBridson}, which uses SPH particle displacement for computing level set
+  \item \emph{Solenthaler} method first introduced in \cite{Solenthaler}. This method exploits the idea of Zhu-Bridson technique, but improves the computation of level set to remove artifact of Zhu-Bridson level set in concave areas.
+\end{itemize}
+
+
+
+\section{Framework architecture}
+
+\section{Adaptive hash tables for Marching Cubes grid}
+As described in \cite{Akinchi} the computation time for extracting smooth surfaces is mainly influenced by
+the resolution of the Marching Cubes grid and the smoothing radius R and achieving high quality surfaces is possible at the expense of performance. One of the main causes of this issue is computing the scalar field over the volume of the fluid instead of concentrating on the surface area. Thus for performance and memory optimization reasons we decided to apply suggestions, proposed in \cite{Akinchi}.
+
+First step is to determine MC grid domain, on which all computation operations will be performed. To perform fluid surface reconstruction it is enough to compute SDF for a MC grid cells that are near the fluid surface. To determine compute \emph{surface cells vertices} we have to:
+\begin{itemize}
+		\item Compute fluid particles, that are in the near neighborhood to the surface of the fluid. In order to determine surface particles in a preprocessing step, the smoothed color field method \cite{ColorField} is employed.  The smoothed color field value of a particle at position x is computed using Equation \ref{eq:ColorField}.
+		\item For each determined particle compute MC grid vertices, that are within the support radius R from each SPH particle, computed in previous step 
+\end{itemize}
+More details in Algorithm \ref{alg:MC_grid_domain_computation}.
+\begin{equation} \label{eq:ColorField}
+	cf_i = \sum_{j\in SPHNeighbors_i}{m_j \cdot \dfrac{W_{ij}}{\rho_j}}
+\end{equation}
+Where:
+\begin{conditions}
+	SPHNeighbors_i & set of neighbor fluid particles for particle i\\
+	W_{ij} & kernel function\\
+	\rho_j & density of particle j\\
+\end{conditions}
+\begin{algorithm}
+	\caption{Compute MC grid vertices near the SPH surface}
+	\label{alg:MC_grid_domain_computation}
+	\begin{algorithmic}
+		\ForAll{ $i \in ParticleSet$}
+			\State Compute CF using Equation \ref{eq:ColorField}
+			\If{$CF \in ThresholdRange$}
+				\State $ParticleSet \gets ParticleSet - i$
+			\EndIf
+
+		\EndFor
+		\ForAll{$i \in ParticleSet$}
+			\State Compute $Neighbors_i$ of MC vertices within R from  i
+			\State $MCGridDomain \gets MCGridDomain \cup Neighbors_i$
+		\EndFor
+		\State return MCGridDomain
+	\end{algorithmic}
+\end{algorithm} 
+
+\section{Results}
+
+Some examples of the reconstruction can be seen in image \textcolor{red}{INSERT METHOD COMPARISON IMAGES HERE}
