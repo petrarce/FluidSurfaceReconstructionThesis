@@ -7,12 +7,45 @@ For extended testing of the smoothing algorithms next reconstruction methods wer
 \begin{itemize}
   \item \emph{Density based reconstruction} described in \cite{DencRec}. This method uses SPH particle density information to compute level set scalar field, with the domain of SDF values from $[initialValue, initialValue+1]$.
   \item \emph{Zhu-Bridson} method, described in \cite{ZhuBridson}, which uses SPH particle displacement for computing level set
-  \item \emph{Solenthaler} method first introduced in \cite{Solenthaler}. This method exploits the idea of Zhu-Bridson technique, but improves the computation of level set to remove artifact of Zhu-Bridson level set in concave areas.
+  \item \emph{Solenthaler} method first introduced in \cite{Solenthaler}. This method exploits the idea of Zhu-Bridson technique, but improves the computation of level set to remove artifact of Zhu-Bridson method in concave areas.
 \end{itemize}
 
 
 
 \section{Framework architecture}
+To simplify further framework testing, development and extension spacial care was applied to design the class hierarchy. The class diagram is is presented in the Figure \ref{fig:class-diagam}.
+
+\begin{figure}[H]
+
+	\begin{center}
+	\includegraphics[width=150mm]{figures/ClassDiagram.pdf}
+	\end{center}
+	\caption{Class diagram, representing inheritance architecture for the surface reconstruction methods}
+    \label{fig:class-diagam}
+\end{figure}
+The base class for all reconstruction methods is \emph{MarchingCubes} class. This class contains common properties for all methods, which exploits Marching Cubes algorithm. Here \emph{mcDomain} is a pair of two points, representing the domain of marching cubes in 3d space, \emph{dimensions} - is a vector, containing number of MC grid cells in X, Y and Z directions, \emph{gridResolution} - the size of each cell (all cells are assumed to be of a uniform size, this width,length and height of cells are equal), \emph{mcCells} - is a hash table which contains key-value pairs of cell index and number of SPH fluid particles within its support radius. Each MC cell vertex has its unique integer index, which can be transformed from its position in space. The transformations are extensively explained in \cite{Akinchi}. 
+The \emph{MarchingCubes} class has 4 virtual methods, which should be reimplemented inside each subclass:
+\begin{itemize}
+	\item \emph{configureHashTables()} - inside this method every concrete method performs initial configuration of hash tables, which are used to compute SDF.
+	\item \emph{updateGrid()} - computes the cells domain, on which calculation of SDF will be performed.
+	\item \emph{updateLevelSet()} - updates hash tables with values, required to compute level set
+	\item \emph{getSDFvalue} - calculates resulting SDF value for a given MC cell vertex
+\end{itemize}
+
+\emph{MarchingCubes} class reimplements interface method \emph{generateMesh()} composing previously described functions as described in Algorithm \ref{alg:generateMesh}.
+
+\begin{algorithm}
+	\caption{General overview of the algorithm applied inside each concretisation of MarchingCubes class}
+	\label{alg:generateMesh}
+	\begin{algorithmic}
+		\State $configureHashTables()$
+		\State $updateGrid()$
+		\State $updateLevelSet()$
+		\State $mesh \gets computeMesh()$ 
+		\State $return mesh$
+	\end{algorithmic}
+\end{algorithm}
+
 \textcolor{red}{TODO}
 \section{Adaptive hash tables for Marching Cubes grid}
 As described in \cite{Akinchi} the computation time for extracting smooth surfaces is mainly influenced by
@@ -23,7 +56,6 @@ First step is to determine MC grid domain, on which all computation operations w
 		\item Compute fluid particles, that are in the near neighborhood to the surface of the fluid. In order to determine surface particles in a preprocessing step, the smoothed color field method \cite{ColorField} is employed.  The smoothed color field value of a particle at position x is computed using Equation \ref{eq:ColorField}.
 		\item For each determined particle compute MC grid vertices, that are within the support radius R from each SPH particle, computed in previous step 
 \end{itemize}
-More details in Algorithm \ref{alg:MC_grid_domain_computation}.
 \begin{equation} \label{eq:ColorField}
 	cf_i = \sum_{j\in SPHNeighbors_i}{m_j \cdot \dfrac{W_{ij}}{\rho_j}}
 \end{equation}
@@ -33,6 +65,7 @@ Where:
 	W_{ij} & kernel function\\
 	\rho_j & density of particle j\\
 \end{conditions}
+Detailed instructions sequence described in Algorithm \ref{alg:MC_grid_domain_computation}.
 \begin{algorithm}
 	\caption{Compute MC grid vertices near the SPH surface}
 	\label{alg:MC_grid_domain_computation}

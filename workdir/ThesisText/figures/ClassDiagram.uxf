@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="14.3.0">
+  <zoom_level>10</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>390</x>
+      <y>170</y>
+      <w>770</w>
+      <h>200</h>
+    </coordinates>
+    <panel_attributes>&lt;&lt;abstract&gt;&gt;
+/MarchingCubes/
+--
+#fluid: FluidData
+#mcDomain : pair&lt;vec3, vec3&gt; //Marching cubes domain, containing lower and upper corners of the grid
+#dimensions: ivec3
+#gridResolution: float
+#mcCells: HeshTable&lt;int, int&gt;
+--
+{virtual} updateGrid(): void
+{virtual} updateLevelSet(): void
+{virtual} getSDFvalue(i: int, j: int, k: int): float
+{virtual} configureHashTables(): void
+
+
+
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>630</x>
+      <y>0</y>
+      <w>290</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>/&lt;&lt;interface&gt;&gt;/
+/SurfaceReconstructor/
+--
+--
++generateMesh(FluidData) : MeshData;
+
+
+
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>760</x>
+      <y>90</y>
+      <w>30</w>
+      <h>100</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>240</x>
+      <y>430</y>
+      <w>490</w>
+      <h>50</h>
+    </coordinates>
+    <panel_attributes>DencityBasedReconstruction
+--
+#levelSetFunction: HashTable&lt;int, float&gt;
+
+
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>480</x>
+      <y>360</y>
+      <w>290</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;.</panel_attributes>
+    <additional_attributes>270.0;10.0;270.0;40.0;10.0;40.0;10.0;70.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>780</x>
+      <y>430</y>
+      <w>530</w>
+      <h>160</h>
+    </coordinates>
+    <panel_attributes>ZhuBridsomReconstruction
+--
+#radii: float
+#denominators: HashTable&lt;int, float&gt;
+#radiusAvg: HashTable&lt;int, float&gt;
+#positAvg: HashTable&lt;int, float&gt;
+
+
+
+
+
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>760</x>
+      <y>360</y>
+      <w>290</w>
+      <h>90</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;.</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;40.0;270.0;40.0;270.0;70.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>780</x>
+      <y>640</y>
+      <w>530</w>
+      <h>120</h>
+    </coordinates>
+    <panel_attributes>SolenthalerReconstruction
+--
+-cellGradComponents: HashTable&lt;int, GradComponents&gt;
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1020</x>
+      <y>580</y>
+      <w>30</w>
+      <h>80</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;60.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>380</x>
+      <y>780</y>
+      <w>350</w>
+      <h>130</h>
+    </coordinates>
+    <panel_attributes>template=BaseClass
+MLSReconstruction: BaseClass
+--
+-kernelSize: int
+-kernelOffset: int
+-similarityThreshold: float
+-levelSetValues: HashTable&lt;int, float&gt;
+--
+-correctLevelSet(): void</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>780</x>
+      <y>780</y>
+      <w>360</w>
+      <h>170</h>
+    </coordinates>
+    <panel_attributes>template=BaseClass
+BlurReconstruction: BaseClass
+--
+-smoothingFactor: float
+-kernelOffset: int
+-kernelSize: int
+-kernelDepth
+-blurIterations
+-levelSetValues: HashTable&lt;int, float&gt;
+--
+blurLevelSet(): void</panel_attributes>
+    <additional_attributes/>
+  </element>
+</diagram>
