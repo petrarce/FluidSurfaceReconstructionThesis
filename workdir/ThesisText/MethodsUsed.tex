@@ -1,9 +1,9 @@
 \chapter{Research framework}
-Majority of the most popular  reconstruction methods are using level set methods for reconstruction of the fluid surface mesh. Given fluid particle displacement information, particle densities and other SPH information this methods are computing scalar distance field (SDF) values for previously defined 3D grid domain. After computation of the SDF values this methods apply marching cubes algorithm to construct a fluid surface mesh.
-Thus  smoothing algorithms, described in this thesis is designed such that it can be applied on the reconstruction algorithms with such infrastructure.
+Majority of the most popular fluid surface reconstruction methods are using level set technique for construction of fluid surface mesh. Given fluid particle displacement , density and other SPH information this methods are computing scalar distance field (SDF) values for previously defined 3D grid domain. After computation of the SDF values this methods apply marching cubes algorithm to construct to determine surface surface vertices.
+Thus  smoothing algorithms, described in this thesis are designed in the way that they can be applied on the reconstruction algorithms with described infrastructure.
 
 
-For extended testing of the smoothing algorithms next reconstruction methods were used:
+In this thesis next methods were implemented for surface reconstruction:
 \begin{itemize}
   \item \emph{Density based reconstruction} described in \cite{DencRec}. This method uses SPH particle density information to compute level set scalar field, with the domain of SDF values from $[initialValue, initialValue+1]$.
   \item \emph{Zhu-Bridson} method, described in \cite{ZhuBridson}, which uses SPH particle displacement for computing level set
@@ -13,7 +13,7 @@ For extended testing of the smoothing algorithms next reconstruction methods wer
 
 
 \section{Framework architecture}
-To simplify further framework testing, development and extension spacial care was applied to design the class hierarchy. The class diagram is is presented in the Figure \ref{fig:class-diagam}.
+To simplify further framework development and testing spacial care was applied to design the class hierarchy. The class diagram is presented in the Figure \ref{fig:class-diagam}.
 
 \begin{figure}[H]
 
@@ -23,16 +23,16 @@ To simplify further framework testing, development and extension spacial care wa
 	\caption{Class diagram, representing inheritance architecture for the surface reconstruction methods}
     \label{fig:class-diagam}
 \end{figure}
-The base class for all reconstruction methods is \emph{MarchingCubes} class. This class contains common properties for all methods, which exploits Marching Cubes algorithm. Here \emph{mcDomain} is a pair of two points, representing the domain of marching cubes in 3d space, \emph{dimensions} - is a vector, containing number of MC grid cells in X, Y and Z directions, \emph{gridResolution} - the size of each cell (all cells are assumed to be of a uniform size, this width,length and height of cells are equal), \emph{mcCells} - is a hash table which contains key-value pairs of cell index and number of SPH fluid particles within its support radius. Each MC cell vertex has its unique integer index, which can be transformed from its position in space. The transformations are extensively explained in \cite{Akinchi}. 
+The base class for all reconstruction methods is \emph{MarchingCubes} class. This class contains common properties for all methods, which exploits Marching Cubes algorithm. Here \emph{mcDomain} is a pair of two points, representing the domain of marching cubes in 3d space, \emph{dimensions} - is a vector, containing number of MC grid cells in X, Y and Z directions, \emph{gridResolution} - the size of each cell (all cells are assumed to be of a uniform size where $width=length=height$), \emph{mcCells} - is a hash table which contains key-value pairs of cell index and number of SPH fluid particles within its support radius. Each MC cell vertex has its unique integer index, which can be transformed from its position in 3d space. The transformations are extensively explained in \cite{Akinchi}. 
 The \emph{MarchingCubes} class has 4 virtual methods, which should be reimplemented inside each subclass:
 \begin{itemize}
 	\item \emph{configureHashTables()} - inside this method every concrete method performs initial configuration of hash tables, which are used to compute SDF.
-	\item \emph{updateGrid()} - computes the cells domain, on which calculation of SDF will be performed.
-	\item \emph{updateLevelSet()} - updates hash tables with values, required to compute level set
+	\item \emph{updateGrid()} - computes the cells domain where calculation of SDF will be performed.
+	\item \emph{updateLevelSet()} - updates hash tables with data, required to compute level set values
 	\item \emph{getSDFvalue} - calculates resulting SDF value for a given MC cell vertex
 \end{itemize}
 
-\emph{MarchingCubes} class reimplements interface method \emph{generateMesh()} composing previously described functions as described in Algorithm \ref{alg:generateMesh}.
+\emph{MarchingCubes} class re-implements interface method \emph{generateMesh()} composing previously defined functions (see Algorithm \ref{alg:generateMesh}).
 
 \begin{algorithm}
 	\caption{General overview of the algorithm applied inside each concretisation of MarchingCubes class}
@@ -46,7 +46,6 @@ The \emph{MarchingCubes} class has 4 virtual methods, which should be reimplemen
 	\end{algorithmic}
 \end{algorithm}
 
-\textcolor{red}{TODO}
 \section{Adaptive hash tables for Marching Cubes grid}
 As described in \cite{Akinchi} the computation time for extracting smooth surfaces is mainly influenced by
 the resolution of the Marching Cubes grid and the smoothing radius R and achieving high quality surfaces is possible at the expense of performance. One of the main causes of this issue is computing the scalar field over the volume of the fluid instead of concentrating on the surface area. Thus for performance and memory optimization reasons we decided to apply suggestions, proposed in \cite{Akinchi}.
@@ -87,4 +86,23 @@ Detailed instructions sequence described in Algorithm \ref{alg:MC_grid_domain_co
 
 \section{Results}
 
-Some examples of the reconstruction can be seen in image \textcolor{red}{INSERT METHOD COMPARISON IMAGES HERE}
+The results of the reconstruction using previously described methods on Figure \ref{fig:rec_methods}.
+\begin{figure}[H]
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=\textwidth]{figures/DencityBasedReconstruction.png}
+		\caption{Density-based reconstruction \cite{DencRec}}
+	\end{subfigure}
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=\textwidth]{figures/ZhuBridsonReconstruction.png}
+		\caption{Zhu and Bridson reconstruction \cite{ZhuBridson}}
+
+	\end{subfigure}
+	\begin{subfigure}[b]{\textwidth}
+		\includegraphics[width=\textwidth]{figures/SolenthilerReconstruction.png}
+		\caption{Solenthaler reconstruction \cite{Solenthaler}}
+
+	\end{subfigure}
+	\label{fig:rec_methods}
+\end{figure}
+Each method has different quality of the reconstructed surface due to the SDF computation approach. In this case Zhu-Bridson and Solenthaler methods at it fundamental have a similar approach of computing SDF, but Additional to this Solenthaler method removes artifacts in concave regions, that are inherent for Zhu-Bridson reconstruction method.
+
