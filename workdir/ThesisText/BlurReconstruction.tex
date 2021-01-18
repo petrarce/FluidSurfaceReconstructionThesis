@@ -18,6 +18,7 @@ The main goal of this thesis is to develop a method, which will smooth out a hig
 \section{Algorithm description}
 Blur method was incorporated into the research framework according to the class hierarchy in Figure \ref{fig:class-diagam}. According to the class diagram the method inherits underlying base method (in our case its Dencity Based, Zhu and Bridson or Solenthaler metods), on top of which computed level set is blurred.  Algorithm \ref{alg:blur_alg} shows the pseudo-code fpr \emph{updateLevelSet()}.
 \begin{algorithm}[H]
+	\scriptsize
 	\begin{algorithmic}
 		\State $levelSet \gets  BaseClass::initialLevelSet$
 		\For{$i \in [0, blurIterations]$}
@@ -31,6 +32,7 @@ According to Algorithm \ref{alg:blur_alg} blurring of the level set could be per
 
 The \emph{blurLevelSet()} pesudo-code is explained in Algorythm \ref{alg:blur_level_set}
 \begin{algorithm}[H]
+	\scriptsize
 	\begin{algorithmic}
 		\ForAll{$vtx \in MC\_CellDomain$}
 			\State $neighbors \gets getNeighbourVertices(vtx);$
@@ -54,7 +56,7 @@ newLS = oldLS \cdot (1 - sf) + blurLS \cdot sf \label{eq:level_set_value}
 \end{equation}
 In Equation \ref{eq:level_set_value} $sf$ is a smoothing factor or a weight. The smoothing factor itself is calculated according to equation \ref{eq:smooth_factor}.
 \begin{equation}
-	sf_{vtx} = -1 \cdot (1 - min(1, \dfrac{bsf \cdot fp_{vtx}}{maxFp})^2)^{10} + 1 \label{eq:smooth_factor}
+	sf_{vtx} = 1 - (1 - min(1, \dfrac{bsf \cdot fp_{vtx}}{maxFp})^2)^{10} \label{eq:smooth_factor}
 \end{equation}
 where:
 \begin{conditions}
@@ -63,8 +65,17 @@ where:
 	maxFp & maximum possible fluid particles that can be in the neighborhood of the vertex \\
 	bsf & base support factor (use defined)
 \end{conditions}
-The smoothing factor formula was designed such that it should be maximal for vertices that contains full fluid particles set and minimum where number of fluid particles limits to zero. The motivation to apply such smoothing factor comes from the problem of the blurring algorythm. If we apply blur algorithm uniformly in to all MC vertex domain,  blur will smooth out the features in a thin areas and in the areas with small set of particles (droplets or splashes). Figure \ref{fig:smoothing_factor_influence} shows the problem off application of the blur algorithm w.o. application of smoothing factor.
+The smoothing factor formula was designed such that it should be maximal for vertices that contains full fluid particles set and minimum where number of fluid particles limits to zero (see Figure \ref{fig:sf_function_graph}).
+\begin{figure}[H]
+	\begin{center}
+			\includegraphics[width=0.5\textwidth]{figures/sf_function_graph.png}		
+	\end{center}
+	\caption{Graphic of function, representing equation \ref{eq:smooth_factor}. Taking into account that $min(1, \dfrac{bsf \cdot fp_{vtx}}{maxFp}) \in [0,1]$ the function converges from 0 to 1 in the interval $x \in [0, 0.5]$ and limits to 1 for the area $x\in [0.5, 1]$}
+	\label{fig:sf_function_graph}
+\end{figure}
 
+
+The motivation to apply such smoothing factor comes from the problem of the blurring algorythm. If we apply blur algorithm uniformly in to all MC vertex domain,  blur will smooth out the features in a thin areas and in the areas with small set of particles (droplets or splashes). Figure \ref{fig:smoothing_factor_influence} shows the problem off application of the blur algorithm w.o. application of smoothing factor.
 
 \begin{figure}[H]
 	\begin{center}
@@ -73,6 +84,7 @@ The smoothing factor formula was designed such that it should be maximal for ver
 	\caption{Leftmost is initial Zhu and Bridson reconstruction, middle - blur reconstruction w.o. smoothing factor application, rightmost - blur reconstruction with usage of smoothing factor}
 	\label{fig:smoothing_factor_influence}
 \end{figure}
+
 
 The idea of blurring using smoothing factor is to blur level set as much as possible in the areas where surface of fluid is normal flat surface, and to apply less blur in areas, where set of MC cells lacks fluid particles. Suppose the general case in Figure \ref{fig:sf_example}. In the figure red and yellow grid vertices contains full and half set of particles respectively. Level set values of the grid points are supposed to be blurred as much as possible.
 \begin{figure}[H]
@@ -84,34 +96,107 @@ The idea of blurring using smoothing factor is to blur level set as much as poss
 \end{figure}
 Applying blur to the level set vertices that are inside the fluid (and all its neighbor cells are also inside the fluid) will not change the level set value too much as soon all vertices that has full set of fluid particles in the neighborhood will have similar level set values. 
 For the MC vertices that are near the corners the 75\% of the neighbor vertices are outside the fluid, which will bias the vertex outside the fluid, thus the fluid will shrink. This is also relevant for the thin areas and splashes.\\
-At the figure \ref{fig:blur_thin_area} the effect of applying blur in the thin area and in the corners can be observed. The flat surface is smoothed out, but at the same time surface at the thin and splash areas is degraded, some small features/droplets are lost
-\begin{figure}[h]
+At the figure \ref{fig:blur_w_o_sf} the effect of surface shrinkage of applying blur in the thin area and in the corners w.r.t. the initial reconstruction method can be observed. The flat surface is smoothed out, but at the same time surface at the thin and splash areas is degraded, some small features/droplets are lost.
+\begin{figure}[H]
 	\begin{center}
-		\begin{subfigure}[b]{\textwidth}
-			\includegraphics[width=\textwidth]{figures/DenvityBasedSplashArea.png}
-			\caption{Density based surface reconstruction with blur (smoothing factor is not applied)}
-		\end{subfigure}
 		\begin{subfigure}[b]{\textwidth}
 			\includegraphics[width=\textwidth]{figures/DenvityBlurredSplashArea.png}
 			\caption{Density based surface reconstruction}
+			\label{fig:denc_rec}
+		\end{subfigure}
+		\begin{subfigure}[b]{\textwidth}
+			\includegraphics[width=\textwidth]{figures/DenvityBasedSplashArea.png}
+			\caption{Density based surface reconstruction with blur (smoothing factor is not applied)}
+			\label{fig:blur_w_o_sf}
 		\end{subfigure}
 	\end{center}
 	\caption{Comparison of original reconstruction method and blurred reconstruction without application of smoothing factor}
 	\label{fig:blur_thin_area}
 \end{figure}
-In contrast to this application of the smoothing factor smooths out the flat surface areas, but still preserves small feature areas (see Figure \ref{fig:blur_thin_area_with_sf}).
-\begin{figure}[h]
-	\begin{center}
-		\begin{subfigure}[b]{\textwidth}
-			\includegraphics[width=\textwidth]{figures/DenvityBasedSplashArea2.png}
-			\caption{Density based surface reconstruction with blur (smoothing factor is applied)}
-		\end{subfigure}
-		\begin{subfigure}[b]{\textwidth}
-			\includegraphics[width=\textwidth]{figures/DenvityBlurredSplashArea2.png}
-			\caption{Density based surface reconstruction}
-		\end{subfigure}
-	\end{center}
-	\caption{Comparison of original reconstruction method and blurred reconstruction with application of smoothing factor}
-	\label{fig:blur_thin_area_with_sf}
-\end{figure}
+In the other hand applying blur on level set with smoothing factor smooths out the flat surface areas bumps, but preserves small feature areas (see Figure \label{fig:blur_thin_area_with_sf}).
+\begin{figure}[H]
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/DenvityBasedSplashArea2.png}
+               \caption{Density based surface}
+               \label{fig:db_rec}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/DenvityBlurredSplashArea2.png}
+               \caption{Applying smoothing factor to level set blur}
+				\label{fig:blur_with_sf}
+        \end{subfigure}
+       \caption{Comparison of original reconstruction method and blurred reconstruction with application of smoothing factor}
+       \label{fig:blur_thin_area_with_sf}
+ \end{figure}
+ \subsection{Neighbors detection algorithm}
+In the Algorithm \ref{alg:blur_level_set} MC neighbor vertices are computed in function $getNeighbourVertices(vtx)$. The Algorithm \ref{alg:blur_nbs_search} describes the procedure of neighbors detection procedure.
+\begin{algorithm}[H]
+	\scriptsize
+	\begin{algorithmic}
+		\State $neighbors \gets \{\}$
+		\State $sdfGradient \gets \nabla_x sdf(vtx)$
+		\If{$sdfGradient \cdot sdfGradient < 1e-6$}
+			\State $return\ neighbors$
+		\EndIf
+		\State $Normalize sdfGradient$
+		
+		\For{$i \in [-kernelSize \cdot kernelOffset, kernelSize \cdot kernelOffset]$, $stepsize = kernelOffset$}
+			\For{$j \in [-kernelSize \cdot kernelOffset, kernelSize \cdot kernelOffset]$, $stepsize = kernelOffset$}
+				\For{$k \in [-kernelSize \cdot kernelOffset, kernelSize \cdot kernelOffset]$, $stepsize = kernelOffset$}
+					\If{$i = 0 \land j = 0 \land k = 0$}
+						\State $neighbors \gets neighbors \cup vtx$
+						\State $continue$
+					\EndIf
+					
+					\State $offsetVector \gets [i \cdot GridResolution, j \cdot GridResolution, k \cdot GridResolution]$;
+					\If{$offsetVector \cdot sdfGradient \geq kernelDepth \cdot kernelSize \cdot GridResolution$}
+						\State $continue$
+					\EndIf
+					
+					\State $neighbors \gets neighbors \cup (vtk + offsetVector)$
+				\EndFor
+			\EndFor
+		\EndFor
+		\State $return\ neighbors$
+	\end{algorithmic}
+	\caption{neighborhood search for level set blur algorithm}
+	\label{alg:blur_nbs_search}
+\end{algorithm}
+The advantage of the static MC grid is that it has a static displacement of all grid vertices, thus neighborhood can be efficiently computed. However, as it appeared, using full neighborhood within the $kernelSize$ is not sufficient for blur algorithm in the application to surface reconstruction. As soon as the aim of the smoothing is to remove bumps in the flat surface areas it is more practical to take into account level set vertices, that are in the neighborhood of the fluid surface. Thus, for each vertex of the the level set gradient of the level set can be computed, and the gradient vector is a normal to the fluid surface \cite{LevelSetMethods}. Thus for the flat surface areas it is convenient to blur level set vertex value w.r.t. vertices, which resides in a tangential direction to the surface normal.
 
+\begin{figure}[H]
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/RealFluidSurfaceLevelSet.png}
+               \caption{Expected reconstruction of flat surface}
+               \label{fig:expected_fs}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/ReconstructedFluidSurface.png}
+               \caption{Bumpy reconstruction of flat surface}
+				\label{fig:recon_fs}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/LevelSetBlurFullKernel.png}
+               \caption{Application of full kernel size}
+               \label{fig:full_ks}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/LevelSetBlurKernelPart.png}
+               \caption{Adjustment kernel in normal direction to iso-surface}
+				\label{fig:partial_ks}
+        \end{subfigure}
+
+       \caption{Colored lines are iso-surface levels. Dots are MC grid vertices with their respective level set values}
+       \label{fig:kd_surface_explenation}
+ \end{figure}
+At the Figure \ref{fig:expected_fs} expected fluid surface reconstruction in flat area is displayed. Dots of different colors are the MC grid vertices. Colors represents their level set value. In the perfect case level set ISO-lines (in the 2D example) forms perfect lines, thus MC grid vertices will receive similar values along the level set line. However, due to irregular displacement of fluid particles surface is usually reconstructed as shown in Figure \ref{fig:recon_fs}. In case if we apply full kernel size (see Figure \ref{fig:full_ks}) we will pick a level set values from different iso-surface levels, which will change level set values unpredictably. The better approach is to pick a kernel frame, so that only a level set values of near surface MC vertices will be used for blur operation (Figure \ref{fig:partial_ks}). This way blur operation will smooth out iso-surface lines of the level set in flat regions and results in a smoother surface. Especially the influence of the kernel depth can be seen in a thin areas, where a kernel size is larger than thickness of a fluid surface (see Figure \textcolor{red}{TODO: add figure}).
+
+Example can be seen from the Figure \textcolor{red}{TODO: add example of kernel depth in real fluid domain}
+
+\subsection{Blur kernel size and offset}
+\textcolor{red}{TODO}
+\section{Results}
+\textcolor{red}{TODO}
+\section{Performance analysis}
+\textcolor{red}{TODO}
+\section{Conclusions}

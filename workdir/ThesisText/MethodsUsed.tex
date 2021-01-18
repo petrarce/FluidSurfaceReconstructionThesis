@@ -35,6 +35,7 @@ The \emph{MarchingCubes} class has 4 virtual methods, which should be reimplemen
 \emph{MarchingCubes} class re-implements interface method \emph{generateMesh()} composing previously defined functions (see Algorithm \ref{alg:generateMesh}).
 
 \begin{algorithm}
+	\scriptsize
 	\caption{General overview of the algorithm applied inside each concretisation of MarchingCubes class}
 	\label{alg:generateMesh}
 	\begin{algorithmic}
@@ -42,7 +43,7 @@ The \emph{MarchingCubes} class has 4 virtual methods, which should be reimplemen
 		\State $updateGrid()$
 		\State $updateLevelSet()$
 		\State $mesh \gets computeMesh()$ 
-		\State $return mesh$
+		\State $return\ mesh$
 	\end{algorithmic}
 \end{algorithm}
 
@@ -66,6 +67,7 @@ Where:
 \end{conditions}
 Detailed instructions sequence described in Algorithm \ref{alg:MC_grid_domain_computation}.
 \begin{algorithm}
+	\scriptsize
 	\caption{Compute MC grid vertices near the SPH surface}
 	\label{alg:MC_grid_domain_computation}
 	\begin{algorithmic}
@@ -80,7 +82,7 @@ Detailed instructions sequence described in Algorithm \ref{alg:MC_grid_domain_co
 			\State Compute $Neighbors_i$ of MC vertices within R from  i
 			\State $MCGridDomain \gets MCGridDomain \cup Neighbors_i$
 		\EndFor
-		\State return MCGridDomain
+		\State $return\ MCGridDomain$
 	\end{algorithmic}
 \end{algorithm} 
 
