@@ -113,7 +113,7 @@ At the figure \ref{fig:blur_w_o_sf} the effect of surface shrinkage of applying 
 	\caption{Comparison of original reconstruction method and blurred reconstruction without application of smoothing factor}
 	\label{fig:blur_thin_area}
 \end{figure}
-In the other hand applying blur on level set with smoothing factor smooths out the flat surface areas bumps, but preserves small feature areas (see Figure \label{fig:blur_thin_area_with_sf}).
+In the other hand applying blur on level set with smoothing factor smooths out the flat surface areas bumps, but preserves small feature areas (see Figure \ref{fig:blur_thin_area_with_sf}).
 \begin{figure}[H]
         \begin{subfigure}[b]{0.5\textwidth}
                \includegraphics[width=\textwidth]{figures/DenvityBasedSplashArea2.png}
@@ -133,7 +133,7 @@ In the Algorithm \ref{alg:blur_level_set} MC neighbor vertices are computed in f
 \begin{algorithm}[H]
 	\scriptsize
 	\begin{algorithmic}
-		\State $neighbors \gets \{\}$
+		\State $neighbors \gets \{vtx\}$
 		\State $sdfGradient \gets \nabla_x sdf(vtx)$
 		\If{$sdfGradient \cdot sdfGradient < 1e-6$}
 			\State $return\ neighbors$
@@ -162,7 +162,10 @@ In the Algorithm \ref{alg:blur_level_set} MC neighbor vertices are computed in f
 	\caption{neighborhood search for level set blur algorithm}
 	\label{alg:blur_nbs_search}
 \end{algorithm}
-The advantage of the static MC grid is that it has a static displacement of all grid vertices, thus the neighborhood can be efficiently computed. However, as it appeared, using the full neighborhood within the $kernelSize$ is not sufficient for a blur algorithm in the application to surface reconstruction. As soon as the smoothing aims to remove bumps in the flat surface areas it is more practical to take into account level set vertices, that are in the neighborhood of the fluid surface. Thus, for each vertex of the level set gradient of the level set can be computed, and the gradient vector is normal to the fluid surface \cite{LevelSetMethods}. Thus for the flat surface areas, it is convenient to blur level set vertex value w.r.t. vertices, which resides in a tangential direction to the surface normal.
+\subsection{Blur kernel size and offset}
+\textcolor{red}{TODO}
+
+The advantage of the static MC grid is that it has a static displacement of all grid vertices, thus the neighborhood can be efficiently computed. However, using the full neighborhood within the $kernelSize$ and $kernelOffset$ is not sufficient for level set blurring. As soon as the smoothing aims to remove bumps in the flat surface areas it is more practical to take into account level set vertices, that are in the neighborhood of the fluid surface. Thus, for each vertex of the level set gradient of the level set can be computed, and the gradient vector is normal to the fluid surface \cite{LevelSetMethods}. Thus for the flat surface areas, it is convenient to blur level set vertex value w.r.t. vertices, which resides in a tangential direction to the surface normal.
 
 \begin{figure}[H]
         \begin{subfigure}[b]{0.5\textwidth}
@@ -189,12 +192,9 @@ The advantage of the static MC grid is that it has a static displacement of all 
        \caption{Colored lines are iso-surface levels. Dots are MC grid vertices with their respective level set values}
        \label{fig:kd_surface_explenation}
  \end{figure}
-At the Figure \ref{fig:expected_fs} expected fluid surface reconstruction in flat area is displayed. Dots of different colors are the MC grid vertices. Colors represent the level set value. In the perfect case level set ISO-lines (in the 2D example) forms perfect lines, thus MC grid vertices will receive similar values along the level set line. However, due to the irregular displacement of fluid particles surface is usually reconstructed as shown in Figure \ref{fig:recon_fs}. In case if we apply full kernel size (see Figure \ref{fig:full_ks}) we will pick level set values from different iso-surface levels, which will change level set values unpredictably. The better approach is to pick a kernel frame so that only level set values of near-surface MC vertices will be used for blur operation (Figure \ref{fig:partial_ks}). This way blur operation will smooth out iso-surface lines of the level set in flat regions and results in a smoother surface. Especially the influence of the kernel depth can be seen in thin areas, where kernel size is larger than a thickness of a fluid surface (see Figure \textcolor{red}{TODO: add figure}).
+At the Figure \ref{fig:expected_fs} expected iso-surface in flat fluid area is displayed. Dots of different colors are the MC grid vertices. Colors represent the level set value. In the perfect case level set ISO-lines (in the 2D example) forms straight lines, thus MC grid vertices along the iso-line will receive similar values. However, due to the irregular displacement of fluid particles surface is usually reconstructed as shown in Figure \ref{fig:recon_fs}. In case if we apply full kernel size (see Figure \ref{fig:full_ks}) we will pick level set values from different iso-surface levels, which will change level set values unpredictably.\\
+The better approach is to pick a kernel frame so that only level set values of near-surface MC vertices will be used for blur operation (Figure \ref{fig:partial_ks}). This way blur operation will smooth out grid vertices along the iso lines. Especially the influence of the kernel depth can be seen in thin areas, where kernel frame is larger than a thickness of a fluid surface (see Figure \textcolor{red}{TODO: add figure}).
 
-An example can be seen from Figure \textcolor{red}{TODO: add an example of kernel depth in real fluid domain}
-
-\subsection{Blur kernel size and offset}
-\textcolor{red}{TODO}
 \section{Results}
 \textcolor{red}{TODO}
 \section{Performance analysis}
