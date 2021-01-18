@@ -1,5 +1,5 @@
 \chapter{Blur level set}
-During the reconstruction of the surface all methods, in one form or another (depending on the level set computation approach), are using particle displacement information,. In the SPH based fluid simulation frameworks the displacement is usually irregular, thus small gaps can be formed. This gaps are threated as undesirable low frequency noise. The comparison of the surface reconstruction based on regular and irregular displacement of the particles is in the Figure \ref{fig:rec_vs_displacement}.
+During the reconstruction of the surface all methods, in one form or another (depending on the level set computation approach), are using particle displacement information. In the SPH based fluid simulation frameworks, the displacement is usually irregular, thus small gaps can be formed. These gaps are treated as undesirable low-frequency noise. The comparison of the surface reconstruction based on a regular and irregular displacement of the particles is in Figure \ref{fig:rec_vs_displacement}.
 \begin{figure}[H]
 	\begin{center}
 		\begin{subfigure}[b]{0.6\textwidth}
@@ -16,7 +16,7 @@ During the reconstruction of the surface all methods, in one form or another (de
 \end{figure}
 The main goal of this thesis is to develop a method, which will smooth out a high frequency bumps on flat surface areas, preserving the surface features. The first idea, that was applied to achieve this goal is simple blurring technique, which is extensively used in computer graphics, such as Gaussian Blur, Median blur, Bilateral blur or other image filtering techniques. In this chapter Blur-based method will be proposed to achieve the given goal. 
 \section{Algorithm description}
-Blur method was incorporated into the research framework according to the class hierarchy in Figure \ref{fig:class-diagam}. According to the class diagram the method inherits underlying base method (in our case its Dencity Based, Zhu and Bridson or Solenthaler metods), on top of which computed level set is blurred.  Algorithm \ref{alg:blur_alg} shows the pseudo-code fpr \emph{updateLevelSet()}.
+Blur method was incorporated into the research framework according to the class hierarchy in Figure \ref{fig:class-diagam}. According to the class diagram, the method inherits the underlying base method (in our case its Density-Based, Zhu and Bridson, or Solenthaler methods), on top of which the computed level set is blurred.  Algorithm \ref{alg:blur_alg} shows the pseudo-code for \emph{updateLevelSet()}.
 \begin{algorithm}[H]
 	\scriptsize
 	\begin{algorithmic}
@@ -75,7 +75,7 @@ The smoothing factor formula was designed such that it should be maximal for ver
 \end{figure}
 
 
-The motivation to apply such smoothing factor comes from the problem of the blurring algorythm. If we apply blur algorithm uniformly in to all MC vertex domain,  blur will smooth out the features in a thin areas and in the areas with small set of particles (droplets or splashes). Figure \ref{fig:smoothing_factor_influence} shows the problem off application of the blur algorithm w.o. application of smoothing factor.
+The motivation to apply such a smoothing factor comes from the problem of the blurring algorithm. If we apply the blur algorithm uniformly into all MC vertex domains, the blur will smooth out the features in thin areas and the areas with a small set of particles (droplets or splashes). Figure \ref{fig:smoothing_factor_influence} shows the problem of application of the blur algorithm w.o. application of smoothing factor.
 
 \begin{figure}[H]
 	\begin{center}
@@ -86,7 +86,7 @@ The motivation to apply such smoothing factor comes from the problem of the blur
 \end{figure}
 
 
-The idea of blurring using smoothing factor is to blur level set as much as possible in the areas where surface of fluid is normal flat surface, and to apply less blur in areas, where set of MC cells lacks fluid particles. Suppose the general case in Figure \ref{fig:sf_example}. In the figure red and yellow grid vertices contains full and half set of particles respectively. Level set values of the grid points are supposed to be blurred as much as possible.
+The idea of blurring using a smoothing factor is to blur the level set as much as possible in the areas where the surface of the fluid is flat and to apply less blur in areas, where a set of MC cells lacks fluid particles. Suppose the general case in Figure \ref{fig:sf_example}. In the figure red and yellow grid, vertices contain a full and half set of particles respectively. Level set values of the grid points are supposed to be blurred as much as possible.
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.5\textwidth]{figures/SmoothingFactorPictureExplenation.png}		
@@ -162,7 +162,7 @@ In the Algorithm \ref{alg:blur_level_set} MC neighbor vertices are computed in f
 	\caption{neighborhood search for level set blur algorithm}
 	\label{alg:blur_nbs_search}
 \end{algorithm}
-The advantage of the static MC grid is that it has a static displacement of all grid vertices, thus neighborhood can be efficiently computed. However, as it appeared, using full neighborhood within the $kernelSize$ is not sufficient for blur algorithm in the application to surface reconstruction. As soon as the aim of the smoothing is to remove bumps in the flat surface areas it is more practical to take into account level set vertices, that are in the neighborhood of the fluid surface. Thus, for each vertex of the the level set gradient of the level set can be computed, and the gradient vector is a normal to the fluid surface \cite{LevelSetMethods}. Thus for the flat surface areas it is convenient to blur level set vertex value w.r.t. vertices, which resides in a tangential direction to the surface normal.
+The advantage of the static MC grid is that it has a static displacement of all grid vertices, thus the neighborhood can be efficiently computed. However, as it appeared, using the full neighborhood within the $kernelSize$ is not sufficient for a blur algorithm in the application to surface reconstruction. As soon as the smoothing aims to remove bumps in the flat surface areas it is more practical to take into account level set vertices, that are in the neighborhood of the fluid surface. Thus, for each vertex of the level set gradient of the level set can be computed, and the gradient vector is normal to the fluid surface \cite{LevelSetMethods}. Thus for the flat surface areas, it is convenient to blur level set vertex value w.r.t. vertices, which resides in a tangential direction to the surface normal.
 
 \begin{figure}[H]
         \begin{subfigure}[b]{0.5\textwidth}
@@ -189,9 +189,9 @@ The advantage of the static MC grid is that it has a static displacement of all 
        \caption{Colored lines are iso-surface levels. Dots are MC grid vertices with their respective level set values}
        \label{fig:kd_surface_explenation}
  \end{figure}
-At the Figure \ref{fig:expected_fs} expected fluid surface reconstruction in flat area is displayed. Dots of different colors are the MC grid vertices. Colors represents their level set value. In the perfect case level set ISO-lines (in the 2D example) forms perfect lines, thus MC grid vertices will receive similar values along the level set line. However, due to irregular displacement of fluid particles surface is usually reconstructed as shown in Figure \ref{fig:recon_fs}. In case if we apply full kernel size (see Figure \ref{fig:full_ks}) we will pick a level set values from different iso-surface levels, which will change level set values unpredictably. The better approach is to pick a kernel frame, so that only a level set values of near surface MC vertices will be used for blur operation (Figure \ref{fig:partial_ks}). This way blur operation will smooth out iso-surface lines of the level set in flat regions and results in a smoother surface. Especially the influence of the kernel depth can be seen in a thin areas, where a kernel size is larger than thickness of a fluid surface (see Figure \textcolor{red}{TODO: add figure}).
+At the Figure \ref{fig:expected_fs} expected fluid surface reconstruction in flat area is displayed. Dots of different colors are the MC grid vertices. Colors represent the level set value. In the perfect case level set ISO-lines (in the 2D example) forms perfect lines, thus MC grid vertices will receive similar values along the level set line. However, due to the irregular displacement of fluid particles surface is usually reconstructed as shown in Figure \ref{fig:recon_fs}. In case if we apply full kernel size (see Figure \ref{fig:full_ks}) we will pick level set values from different iso-surface levels, which will change level set values unpredictably. The better approach is to pick a kernel frame so that only level set values of near-surface MC vertices will be used for blur operation (Figure \ref{fig:partial_ks}). This way blur operation will smooth out iso-surface lines of the level set in flat regions and results in a smoother surface. Especially the influence of the kernel depth can be seen in thin areas, where kernel size is larger than a thickness of a fluid surface (see Figure \textcolor{red}{TODO: add figure}).
 
-Example can be seen from the Figure \textcolor{red}{TODO: add example of kernel depth in real fluid domain}
+An example can be seen from Figure \textcolor{red}{TODO: add an example of kernel depth in real fluid domain}
 
 \subsection{Blur kernel size and offset}
 \textcolor{red}{TODO}

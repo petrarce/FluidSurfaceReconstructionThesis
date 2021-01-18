@@ -1,19 +1,19 @@
 \chapter{Research framework}
-Majority of the most popular fluid surface reconstruction methods are using level set technique for construction of fluid surface mesh. Given fluid particle displacement , density and other SPH information this methods are computing scalar distance field (SDF) values for previously defined 3D grid domain. After computation of the SDF values this methods apply marching cubes algorithm to construct to determine surface surface vertices.
-Thus  smoothing algorithms, described in this thesis are designed in the way that they can be applied on the reconstruction algorithms with described infrastructure.
+The majority of the most popular fluid surface reconstruction methods are using a level set technique for the construction of the fluid surface mesh. Given fluid particle displacement, density, and other SPH information these methods are computing scalar distance field (SDF) values for previously defined 3D grid domain. After computation of the SDF values, these methods apply the marching cubes algorithm to construct to determine surface vertices.
+Thus smoothing algorithms, described in this thesis are designed in the way that they can be applied to the reconstruction algorithms with the described infrastructure.
 
 
 In this thesis next methods were implemented for surface reconstruction:
 \begin{itemize}
   \item \emph{Density based reconstruction} described in \cite{DencRec}. This method uses SPH particle density information to compute level set scalar field, with the domain of SDF values from $[initialValue, initialValue+1]$.
   \item \emph{Zhu-Bridson} method, described in \cite{ZhuBridson}, which uses SPH particle displacement for computing level set
-  \item \emph{Solenthaler} method first introduced in \cite{Solenthaler}. This method exploits the idea of Zhu-Bridson technique, but improves the computation of level set to remove artifact of Zhu-Bridson method in concave areas.
+  \item \emph{Solenthaler} method first introduced in \cite{Solenthaler}. This method exploits the idea of the Zhu-Bridson technique but improves the computation of the level set to remove artifacts of the Zhu-Bridson method in concave areas.
 \end{itemize}
 
 
 
 \section{Framework architecture}
-To simplify further framework development and testing spacial care was applied to design the class hierarchy. The class diagram is presented in the Figure \ref{fig:class-diagam}.
+To simplify further framework development and testing spatial care was applied to design the class hierarchy. The class diagram is presented in Figure \ref{fig:class-diagam}.
 
 \begin{figure}[H]
 
@@ -49,11 +49,11 @@ The \emph{MarchingCubes} class has 4 virtual methods, which should be reimplemen
 
 \section{Adaptive hash tables for Marching Cubes grid}
 As described in \cite{Akinchi} the computation time for extracting smooth surfaces is mainly influenced by
-the resolution of the Marching Cubes grid and the smoothing radius R and achieving high quality surfaces is possible at the expense of performance. One of the main causes of this issue is computing the scalar field over the volume of the fluid instead of concentrating on the surface area. Thus for performance and memory optimization reasons we decided to apply suggestions, proposed in \cite{Akinchi}.
+the resolution of the Marching Cubes grid and the smoothing radius R and achieving high-quality surfaces is possible at the expense of performance. One of the main causes of this issue is computing the scalar field over the volume of the fluid instead of concentrating on the surface area. Thus for performance and memory optimization reasons we decided to apply suggestions, proposed in \cite{Akinchi}.
 
-First step is to determine MC grid domain, on which all computation operations will be performed. To perform fluid surface reconstruction it is enough to compute SDF for a MC grid cells that are near the fluid surface. To determine compute \emph{surface cells vertices} we have to:
+The first step is to determine the MC grid domain, on which all computation operations will be performed. To perform fluid surface reconstruction it is enough to compute SDF for MC grid cells that are near the fluid surface. To compute \emph{surface cells vertices} we have to:
 \begin{itemize}
-		\item Compute fluid particles, that are in the near neighborhood to the surface of the fluid. In order to determine surface particles in a preprocessing step, the smoothed color field method \cite{ColorField} is employed.  The smoothed color field value of a particle at position x is computed using Equation \ref{eq:ColorField}.
+		\item Compute fluid particles, that are in the near neighborhood to the surface of the fluid. To determine surface particles in a preprocessing step, the smoothed color field method \cite{ColorField} is employed.  The smoothed color field value of a particle at position x is computed using Equation \ref{eq:ColorField}.
 		\item For each determined particle compute MC grid vertices, that are within the support radius R from each SPH particle, computed in previous step 
 \end{itemize}
 \begin{equation} \label{eq:ColorField}
@@ -107,5 +107,5 @@ The results of the reconstruction using previously described methods on Figure \
 	\caption{Reconstructed surfaces with methods, used in this thesis }
 	\label{fig:rec_methods}
 \end{figure}
-Each method has different quality of the reconstructed surface due to the SDF computation approach. In this case Zhu-Bridson and Solenthaler methods at it fundamental have a similar approach of computing SDF, but Additional to this Solenthaler method removes artifacts in concave regions, that are inherent for Zhu-Bridson reconstruction method.
+Each method has a different quality of the reconstructed surface due to the SDF computation approach. In this case, Zhu-Bridson and Solenthaler methods at it fundamental have a similar approach of computing SDF, but Additional to this Solenthaler method removes artifacts in concave regions, that are inherent for Zhu-Bridson reconstruction method.
 
