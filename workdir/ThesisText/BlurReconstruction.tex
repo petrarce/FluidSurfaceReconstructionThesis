@@ -30,7 +30,7 @@ Blur method was incorporated into the research framework according to the class 
 \end{algorithm}
 According to Algorithm \ref{alg:blur_alg} blurring of the level set could be performed arbitrary number of times. The influence of number of iterations will be explained in further section.
 
-The \emph{blurLevelSet()} pesudo-code is explained in Algorythm \ref{alg:blur_level_set}
+The \emph{blurLevelSet()} pseudo-code is explained in Algorithm \ref{alg:blur_level_set}
 \begin{algorithm}[H]
 	\scriptsize
 	\begin{algorithmic}
@@ -244,7 +244,7 @@ Apart to other parameters it was decided to check the influence of application o
        \caption{Reconstructed surface depending on the number of blur iterations}
        \label{fig:bi_reconstruction}
 \end{figure}
-However, the larger amount of iterations smoothed the level set to uniform value, thus on the Figure \ref{fig:bi_8iteration} holes can be seen. Figure \ref{fig:bi_levelset} displays the resulting level set depending on different amount of iterations. 
+However, large amount of iterations smooths out level set to uniform value, thus on the Figure \ref{fig:bi_8iteration} holes can be seen. Figure \ref{fig:bi_levelset} displays the influence of blur iterations on level set itself. 
 \begin{figure}[H]
         \begin{subfigure}[b]{0.5\textwidth}
                \includegraphics[width=\textwidth]{figures/LevelSetBlurIterations4.png}
@@ -261,9 +261,219 @@ However, the larger amount of iterations smoothed the level set to uniform value
        \label{fig:bi_levelset}
 \end{figure}
 
+An important property of the blur reconstruction algorithm should be noted. Lets analyze the blur algorithm, applied on the level set (for simplicity 2D version will be analyzed).\\
+Suppose matrix $A = 
+\begin{pmatrix}
+	1 & 1 & ... & 1\\
+	1 & 1 & ... & 1\\
+	. & . & ... & .\\
+	1 & 1 & ... & 1\\
+\end{pmatrix}$ is a $n \times n$ kernel where n is odd.
+Kernel multiplication operation on level set element is described in equation \ref{eq:kernel-operation}
+\begin{equation}
+	\dfrac{1}{n^2}\cdot A\cdot sdf_{ij} = \sum_{k=- \left \lfloor{n/2}\right \rfloor}^{\left \lfloor{n/2}\right \rfloor}
+		{\sum_{l=- \left \lfloor{n/2}\right \rfloor}^{\left \lfloor{n/2}\right \rfloor}{ A_{k+1, l+1} \cdot sdf_{i+k, j+l}}}
+	\label{eq:kernel-operation}
+\end{equation}
+Suppose $n=3$ and $ sdf^{(k)}_{i,j} = \dfrac{1}{9} \cdot A \cdot sdf^{(k-1)}_{i,j} = \dfrac{1}{9^k} \cdot A^{(k)} \cdot sdf^{(0)}_{i,j}$\\. The claim is that $A^{(k)}$ satisfies properties of a kernel function (\ref{SPHtechniques}):
+\begin{itemize}
+	\item normalization condition
+	\item positivity condition
+	\item symmetry condition
+	\item compact support condition
+\end{itemize}
+\textcolor{red}{TODO: PROOF}\\
+E.g. $A^2 = 
+\begin{pmatrix}
+1 & 2 & 3 & 2 & 1\\
+2 & 4 & 6 & 4 & 2\\
+3 & 6 & 9 & 6 & 3\\
+2 & 4 & 6 & 4 & 2\\
+1 & 2 & 3 & 2 & 1\\
+\end{pmatrix}$
+$A^3 = 
+\begin{pmatrix}
+ 1 & 3 & 6 & 7 & 6 & 3 & 1\\
+ 3 & 9 & 18 & 21 & 18 & 9 & 3\\
+ 6 & 18 & 36 & 42 & 36 & 18 & 6\\
+ 7 & 21 & 42 & 49 & 42 & 21 & 7\\
+ 6 & 18 & 36 & 42 & 36 & 18 & 6\\
+ 3 & 9 & 18 & 21 & 18 & 9 & 3\\
+ 1 & 3 & 6 & 7 & 6 & 3 & 1\\
+\end{pmatrix}$\\
+$A^4 = 
+\begin{pmatrix}
+1 & 4 & 10 & 16 & 19 & 16 & 10 & 4 & 1\\
+4 & 16 & 40 & 64 & 76 & 64 & 40 & 16 & 4\\
+10 & 40 & 100 & 160 & 190 & 160 & 100 & 40 & 10\\
+16 & 64 & 160 & 256 & 304 & 256 & 160 & 64 & 16\\
+19 & 76 & 190 & 304 & 361 & 304 & 190 & 76 & 19\\
+16 & 64 & 160 & 256 & 304 & 256 & 160 & 64 & 16\\
+10 & 40 & 100 & 160 & 190 & 160 & 100 & 40 & 10\\
+4 & 16 & 40 & 64 & 76 & 64 & 40 & 16 & 4\\
+1 & 4 & 10 & 16 & 19 & 16 & 10 & 4 & 1\\
+\end{pmatrix}$\\
+This means, that given a kernel size = 1, kernel offset = 0 and blur iterations = n the final blur kernel applied will have a form of $ n \times n$ kernel that satisfies the kernel function conditions (for 2D case, and 3D case \textcolor{red}{TODO: PROOF}). Also the cost of the blur stage is reduced from $O(p \cdot n^2)$ when using $n \times n$ kernel to $O(9 \cdot p \cdot n)$ when using $3\times 3$ kernel applied n times on p MC grid cells. However, in  case of iterative approach kernel converges to Gaussian, in the other case uniform kernel is applied. 
 
-\section{Performance analysis}
-\textcolor{red}{TODO}
-\section{Results}
-\textcolor{red}{TODO}
+
+\section{Results and Performance comparison}
+In this section performance of the blur algorithm will be analyzed w.r.t. the original reconstruction methods. All tests was performed on one core of AMD Ryzen 5. No parallelization was applied simplify the analysis.
+Table \ref{tab:perf_analysis} shows the wall-clock time for each method in different stages.
+Reconstruction was performed on the simulation with 40000 particles, 93 frames and 0.02 particle radius, where:
+\begin{conditions}
+	DB & Density based reconstruction (MC grid resolution: 0.020000)\\
+	DBblur & Density based reconstruction with level set blur (Kernel size: 2, Kernel offset: 1, Kernel depth: 0.5, Blur iterations: 1)\\
+	ZB & Zhu and Bridson reconstruction (MC grid resolution: 0.020000, Support radius: 0.08\\
+	ZBblur & Zhu and Bridson with level set blur (Smoothing factor: 1, Kernel size: 2, Kernel offset: 1, Kernel depth: 0.5, Blur iterations: 1)\\
+\end{conditions}
+\begin{table}[h]
+	\begin{center}
+		\scriptsize
+		\begin{tabular}{|l|c|c|c|c|c|c|}
+			\hline
+			Simulation type & DB & DBblur & ZB & ZBblur \\
+			\hline
+			Total execution time		&	250.210204	&	362.309801	&	227.907790	&	339.686174	\\
+			Hash tables update			&	1.292020	&	1.491784	&	1.846468	&	2.009707	\\
+			Detect surface particles	&	12.742551	&	12.753376	&	12.821589	&	12.805908	\\
+			MC grid update				&	109.401044	&	108.327551	&	66.569929	&	68.213688	\\
+			Level set update			&	113.503782	&	226.926150	&	125.736858	&	245.192591	\\
+			Mesh generation				&	11.154644	&	10.985956	&	17.596987	&	9.521316	\\
+			\hline
+		\end{tabular}
+	\end{center}
+	\caption{Per stage performance analysis of original reconstruction methods versus level set blur}
+	\label{tab:perf_analysis}
+\end{table}
+
+In Table \ref{tab:ks_perf_analysis} performance of the application is analyzed depending on the kernel size. Static simulation parameters:
+\begin{conditions}
+	\text{particle count}  & 40000\\
+	\text{particle radius} & 0.02\\
+	\text{smoothing factor} & 1.0\\
+	\text{kernel offset} & 1\\
+	\text{kernel size} & 1\\
+	\text{kernel depth} & 1.0\\
+	\text{blur iterations} & 1\\
+\end{conditions}
+\begin{table}[H]
+	\begin{center}
+		\scriptsize
+		\begin{tabular}{|l|c|c|c|c|c|c|}
+			\hline
+			Kernel size & 1 & 2 & 3 & 4 \\
+			\hline
+			Hash tables update (sec)		&	0.036016	&	0.035996	&	0.036947	&	0.034786	\\
+			Mesh generation	(sec)			&	0.154370	&	0.155268	&	0.154680	&	0.155067	\\
+			Total execution time (sec)		&	4.661093	&	5.880080	&	8.681242	&	14.524655	\\
+			MC grid update (sec)			&	1.350534	&	1.414452	&	1.378100	&	1.463115	\\
+			Level set update (sec)			&	2.721548	&	3.873281	&	6.716356	&	12.471516	\\
+			Detect surface particles(sec)	&	0.273974	&	0.274874	&	0.273340	&	0.276328	\\
+			\hline
+		\end{tabular}
+	\end{center}
+	\caption{Blur level set method performance depending on kernel size}
+	\label{tab:ks_perf_analysis}
+\end{table}
+From Table \ref{tab:ks_perf_analysis} it can be seen, that the runtime of the level set reconstruction changes exponentially depending on the kernel size.\\
+
+In Table \ref{tab:bi_perf_analysis} reconstruction runtime is given for the blur reconstruction depending on the blur iterations. 
+\begin{table}[H]
+	\begin{center}
+		\scriptsize
+		\begin{tabular}{|l|c|c|c|c|c|c|c|}
+			\hline
+			Blur iterations & 0 & 1 & 2 & 3 & 4 \\
+			\hline
+			Hash tables update (sec)		&	0.030858	&	0.037154	&	0.034373	&	0.035957	&	0.034917\\
+			Mesh generation	(sec)			&	0.151087	&	0.154440	&	0.154813	&	 0.153584	&	0.153664\\
+			Total execution time (sec)		&	4.007258	&	4.708030	&	5.272999	&	5.839118	&	6.475744\\
+			MC grid update (sec)			&	1.435496	&	1.377351	&	1.393668	&	1.391468	&	1.443232\\
+			Level set update (sec)			&	1.968029	&	2.715168	&	3.295140	&	3.859314	&	4.445282\\
+			Detect surface particles(sec)	&	0.278672	&	0.280408	&	0.273828	&	0.276087	&	0.278408\\
+			\hline
+		\end{tabular}
+	\end{center}
+	\caption{Blur level set method performance depending on blur iterations}
+	\label{tab:bi_perf_analysis}
+\end{table}
+Runtime of the reconstruction depending linearly on the number blur iterations.\\
+
+Table \ref{tab:kd_perf_analysis} shows the performance of the application depending on the kernel depth value. Here kernel size is fixed to 5.
+\begin{table}[H]
+	\begin{center}
+		\scriptsize
+		\begin{tabular}{|l|c|c|c|c|}
+			\hline
+			Kernel depth & 0.1 & 0.25 & 0.5 & 1 \\
+			\hline
+			Hash tables update (sec)		&	0.035469	&	0.034264	&	0.035009	&	0.036902\\
+			Mesh generation	(sec)			&	0.153513	&	0.153441	&	0.154675	&	 0.155028\\
+			Total execution time (sec)		&	14.684650	&	16.564669	&	19.218910	&	24.861456\\
+			MC grid update (sec)			&	1.427892	&	1.379971	&	1.413553	&	1.435164\\
+			Level set update (sec)			&	12.667619	&	14.592833	&	17.217208	&	22.836116\\
+			Detect surface particles(sec)	&	0.276308	&	0.281181	&	0.272071	&	0.276914\\
+			\hline
+		\end{tabular}
+	\end{center}
+	\caption{Blur level set method performance depending on kernel depth}
+	\label{tab:kd_perf_analysis}
+\end{table}
+
+Figure \ref{fig:DamBreak} displays the  the comparison of reconstruction results between original method and applied blur.
+\begin{figure}[h]
+	\begin{center}
+        \begin{subfigure}[b]{0.4\textwidth}
+               \includegraphics[width=\textwidth]{figures/ReconstructionDencityBased.png}
+				\caption{Method: DB}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.4\textwidth}
+               \includegraphics[width=\textwidth]{figures/ReconstructionDencityBasedBlur.png}
+				\caption{Method: DBblur}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.4\textwidth}
+               \includegraphics[width=\textwidth]{figures/ReconstructionZhuBridson.png}
+				\caption{Method: ZB}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.4\textwidth}
+               \includegraphics[width=\textwidth]{figures/ReconstructionZhuBridsonBlur.png}
+				\caption{Method: ZBblur}
+        \end{subfigure}
+        \caption{Fluid surface comparison in dam break scene}
+        \label{fig:DamBreak}
+	\end{center}
+\end{figure}
+
+
+Another scene comparison is shown in the figure \ref{fig:MotorScene}. Particle count - 5000, particle radius - 0.025
+\begin{figure}[h]
+	\begin{center}
+        \begin{subfigure}[b]{0.4\textwidth}
+               \includegraphics[width=\textwidth]{figures/ReconstructionMotorSceneDencityBased.png}
+				\caption{Method: DB}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.4\textwidth}
+               \includegraphics[width=\textwidth]{figures/ReconstructionMotorSceneDencityBasedBlur.png}
+				\caption{Method: DBblur}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.4\textwidth}
+               \includegraphics[width=\textwidth]{figures/ReconstructionMotorSceneZhuBridson.png}
+				\caption{Method: ZB}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.4\textwidth}
+               \includegraphics[width=\textwidth]{figures/ReconstructionMotorSceneZhuBridsonBlur.png}
+				\caption{Method: ZBblur}
+        \end{subfigure}
+        \caption{Motor scene fluid surface reconstruction comparison}
+        \label{fig:MotorScene}
+	\end{center}
+\end{figure}
+
+
+
 \section{Conclusions}
+After all experimentations performed with the developed method the conclusion can be made, that application of blur to the level set is definitely influences the final surface quality, and this method is able to smooth flat areas of surface, in the mean time saving small features in splash areas.\\
+The developed algorithm is applied on top of the original reconstruction algorithm. It can be applied to every reconstruction method, which uses scalar distance field to construct iso surfaces and reconstruct the surface itself.\\ 
+Further efforts can be applied to improve algorithm performance, e.g. porting blur stage on GPU.\\
+However, this method still has severe drawback - a problem of parametrization. There are multiple parameters that should be tunned, such as kernel size, kernel offset, kernel depth, smoothing factor, blur iterations. For different reconstruction methods, depending on the structure of the level set, simulation scale, performance and surface quality requirements, there is no golden middle for automatic application of the parametrization. Thus manual parameters tuning is required to achieve required reconstruction quality.\\
+
