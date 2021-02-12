@@ -275,15 +275,28 @@ Kernel multiplication operation on level set element is described in equation \r
 		{\sum_{l=- \left \lfloor{n/2}\right \rfloor}^{\left \lfloor{n/2}\right \rfloor}{ A_{k+1, l+1} \cdot sdf_{i+k, j+l}}}
 	\label{eq:kernel-operation}
 \end{equation}
-Suppose $n=3$ and $ sdf^{(k)}_{i,j} = \dfrac{1}{9} \cdot A \cdot sdf^{(k-1)}_{i,j} = \dfrac{1}{9^k} \cdot A^{(k)} \cdot sdf^{(0)}_{i,j}$\\. The claim is that $A^{(k)}$ satisfies properties of a kernel function (\ref{SPHtechniques}):
+Suppose $n=3$ and $ sdf^{(k)}_{i,j} = \dfrac{1}{9} \cdot A \cdot sdf^{(k-1)}_{i,j} = \dfrac{1}{9^k} \cdot A^{(k)} \cdot sdf^{(0)}_{i,j}$\\. The claim is that $\dfrac{A^{(k)}}{9^k}$ satisfies properties of a kernel function:
 \begin{itemize}
-	\item normalization condition
-	\item positivity condition
-	\item symmetry condition
-	\item compact support condition
+	\item positivity condition : $\forall a_{ij} \in A^(k): a_{ij} >= 0$
+	\item normalization condition: $\forall a_{ij} \in A^(k), i,j \in [n]: \dfrac{\sum{a_{ij}}}{9^k} = 1$
+	\item symmetry condition: $\forall i,j k=\left \lfloor{\dfrac{n}{2}}\right \rfloor $
 \end{itemize}
-\textcolor{red}{TODO: PROOF}\\
-E.g. $A^2 = 
+Thus, when applied to the MC vertices plays a role of weights of the level set values in the neighborhood of the central vertice.\\
+Proof of positivity condition:\\
+As soon as each element of $A^{(k)}$ is formed by summing up neighboring elements of $A^{(k-1)}$ that is $a_{ij}^{(k)} = \sum_{k=-1}^{1}{\sum_{l=-1}^{1}{a^{(k-1)}_{i+k, j+l}}}$, then by simple induction starting with initial kernel $A^(1)=
+\begin{pmatrix}
+1 & 1 & 1\\
+1 & 1 & 1\\
+1 & 1 & 1\\
+\end{pmatrix}$
+it can be proven, that $a_{ij}^{(k)} >= a_{ij}^{(k-1)} >= a_{ij}^{(1)}$.\\
+Proof of normalization condition: \\
+Base step:\\ 
+For initial matrix $A^{(1)}$ it is obvious that $\dfrac{\sum_{i,j = 1}^{n}{a_{ij}}}{9} = 1$.\\
+Induction step: \\
+Let $\dfrac{A^{(k)}}{9^k} = 1$. Taking into account, that $a_{ij}^{(k+1)} = \sum_{k=-1}^{1}{\sum_{l=-1}^{1}{a^{(k)}_{i+k, j+l}}}$ then $\forall a_{ij} \in A^{(k)}$ will appear in the sum of elements of $A^{(k+1)}$ exactly 9 times. Thus $\sum_{i,j}{a_{ij}^{(k+1)}} = 9 \cdot \sum_{i,j}{a_{ij}^{(k)}} = 9^{k+1}$\\
+Some examples of a kernel functions iteratively formed from uniform kernel with kernel size = 1:\\
+$A^2 = 
 \begin{pmatrix}
 1 & 2 & 3 & 2 & 1\\
 2 & 4 & 6 & 4 & 2\\
@@ -313,7 +326,7 @@ $A^4 =
 4 & 16 & 40 & 64 & 76 & 64 & 40 & 16 & 4\\
 1 & 4 & 10 & 16 & 19 & 16 & 10 & 4 & 1\\
 \end{pmatrix}$\\
-This means, that given a kernel size = 1, kernel offset = 0 and blur iterations = n the final blur kernel applied will have a form of $ n \times n$ kernel that satisfies the kernel function conditions (for 2D case, and 3D case \textcolor{red}{TODO: PROOF}). Also the cost of the blur stage is reduced from $O(p \cdot n^2)$ when using $n \times n$ kernel to $O(9 \cdot p \cdot n)$ when using $3\times 3$ kernel applied n times on p MC grid cells. However, in  case of iterative approach kernel converges to Gaussian, in the other case uniform kernel is applied. 
+This means, that given a kernel size = 1, kernel offset = 0 and blur iterations = n the final blur kernel applied will have a form of $ n \times n$ kernel that satisfies the kernel function conditions (proof for 3D case is similar for 2D case). Also the cost of the blur stage is reduced from $O(p \cdot n^2)$ when using $n \times n$ kernel to $O(9 \cdot p \cdot n)$ when using $3\times 3$ kernel applied n times on p MC grid cells. However, in  case of iterative approach kernel converges to Gaussian, in the latter case uniform kernel is applied. 
 
 
 \section{Results and Performance comparison}
@@ -472,8 +485,9 @@ Another scene comparison is shown in the figure \ref{fig:MotorScene}. Particle c
 
 
 \section{Conclusions}
-After all experimentations performed with the developed method the conclusion can be made, that application of blur to the level set is definitely influences the final surface quality, and this method is able to smooth flat areas of surface, in the mean time saving small features in splash areas.\\
-The developed algorithm is applied on top of the original reconstruction algorithm. It can be applied to every reconstruction method, which uses scalar distance field to construct iso surfaces and reconstruct the surface itself.\\ 
-Further efforts can be applied to improve algorithm performance, e.g. porting blur stage on GPU.\\
+After performing previously described experimentations with the developed method the conclusion can be made, that application of blur to the level set is definitely influences the final surface quality, and this method is able to smooth flat areas of surface, in the mean time saving small features in splash areas. The developed algorithm is applied on top of the original reconstruction algorithm. It can be applied to every reconstruction method, which uses scalar distance field to construct iso-surfaces and reconstruct the surface itself.\\ 
+In the future efforts can be applied to improve algorithm performance, e.g. porting blur stage on GPU. The blur stage of the algorithm.\\
 However, this method still has severe drawback - a problem of parametrization. There are multiple parameters that should be tunned, such as kernel size, kernel offset, kernel depth, smoothing factor, blur iterations. For different reconstruction methods, depending on the structure of the level set, simulation scale, performance and surface quality requirements, there is no golden middle for automatic application of the parametrization. Thus manual parameters tuning is required to achieve required reconstruction quality.\\
+Two approach can be used to define a parametrization - fix kernel size = 1, kernel offset = 0, kernel depth = 1 and modify number of blur iterations and smoothing factor. In this case performance will be improved, but blur will not be flexible to the near surface areas, thus sharp features could be smoothed too much.\\
+Another approach is to modify kernel size, kernel depth and smoothing factor, while keeping blur iterations fixed to 1. In this case most reconstruction method is more flexible to blurring low frequency bumps in flat surface areas, meanwhile saving most of the sharp features.
 

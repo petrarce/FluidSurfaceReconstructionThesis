@@ -1,4 +1,10 @@
 \chapter{Moving least squares level set smoothing}
+\section{Introduction}
+As were previously concluded blur level set method requires hight effort to configure all available parameters to match required fluid surface reconstruction quality. Another helpful method comes in mind, which can be applied to correct an implicit ISO-surface such, that the explicit reconstructed surface will be smoothed out.\\
+Moving Least Squares (MLS) is a method for recovering continuous functions from a set of random point samples by calculating a weighted least squares measure biased toward the area around the point at which the retrieved value is requested. Holding in mind, that scalar distance field is the implicit function of the distance to surface, it can be assumed that in the small local neighborhood the function should fit an elementary surface e.g. sphere.\\
+In the work \cite{Apss} new Point Set Surface (PSS) definition based on moving least squares (MLS) fitting of algebraic spheres is presented. The central advantages of APSS approach compared to existing planar MLS include significantly improved stability of the projection under low sampling rates and in the presence of high curvature.\\
+Another important work was performed in \cite{PssLkr} \textcolor{red}{TODO: add description of the work}.\\
+In this thesis MLS was applied directly on the SDF. As a blur level set method the level set mls correction method is also developed to be able to apply it on every reconstruction approach, which in the core uses an implicit SDF ISO-surface.  
 \section{Moving least squares}
 \section{Algorithm}
 \subsection{Kernel size and offset}
