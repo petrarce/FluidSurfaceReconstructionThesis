@@ -73,9 +73,54 @@ Having obtained the coefficients \textbf{c}, we can then compute the value of th
 \end{figure}
 \subsection{Weighted GLS}
 \subsection{Weighted Local Least Squares}
-\subsection{Mooving Least Squares}
+\subsection{Moving Least Squares}
 
 \section{Algorithm}
+In the Algorithm \ref{alg:mls_alg} general overview of the mls smoothing on MC SDF grid is described.
+\begin{algorithm}[H]
+	\scriptsize
+	\begin{algorithmic}
+		\ForAll{$vertex \in MC grid$}
+			\State $curvature \gets getCurvature(vertex)$
+			\State $maxSamples \gets max(1, (2 \cdot kernelSize + 1)^3 \cdot
+					\dfrac{min(\dfrac{1}{curvature}, particleDiameter \cdot flatSurfacePartCount)}{particleDiameter \cdot flatSurfacePartCount})$
+
+			\State $nbs = getNeighbourCells(vertex, kernelSize, kernelOffset, kernelDepth, similarityThreshold, maxSamples)$
+			
+			\State $newLevenSetValue \gets performMlsCorrection(vertex, nbs, kernelSize, kernelOffset)$
+
+			\State $sf\gets computeSmoothingFactor()$
+
+			\State $levelSet[vertex] \gets (1 - sf)\cdot levelSet[vertex] + sf \cdot newLevenSetValue;$
+		\EndFor
+		return levelSet
+	\end{algorithmic}
+	\caption{$mlsSurfaceSmooth$}
+	\label{alg:mls_alg}
+\end{algorithm}
+where $flatSurfacePartCount$ is a user defined parameter to define how large should be curvature sphere radius (in terms of fluid particles) for the fluid area to be considered flat, $kernelSize$ and $kernelOffset$ is a size of the neighborhood of MC vertice, that should be considered during computation of new SDF value, $particleDiameter$ is a diameter of a SPH fluid particle, $similarityThreshold$ is a user defined parameter which defines how different SDF values of neighboring vertices should be to be considered as a sample.\\
+According to the algorithm \ref{alg:mls_alg} for each vertex in the MC grid new value pf the SDF is computed. To compute a new value of SDF first curvature of current MC vertex is computed. The curvature is computed using the method described in \cite{CurvatureComputation}. Hence, the curvature for each MC vertex is computed  with the help of its neighboring particles as:
+\begin{equation}
+	c_i = \sum_j{c_{ij}} = \sum_j(1 - n_j \cdot n_j)\cdot k_c \cdot (x_i - x_j)
+\end{equation}
+where j stands for the neighboring particles, $n$ is the normal of any particle and $k_c$ is the kernel function described as:
+\begin{equation}
+	k_c(x_i - x_j, h) = \sum_j{k_{ij}} = \sum_j(1 - n_j \cdot n_j)\cdot k_c \cdot (x_i - x_j)
+\end{equation}
+
+Then based on the computed curvature a maximum mls samples is computed according to the equation \ref{eq:max_samples_equation}.
+\begin{equation}
+	ms \gets max(1, (2 \cdot ks + 1)^3 \cdot
+					\dfrac{min(\dfrac{1}{cv}, pd \cdot fspc)}{pd \cdot fspc})
+	\label{eq:max_samples_equation}
+\end{equation}
+where $ks$ is a kernel size, $cv$ is a MC vertex curvature,  $pd$ - particle diameter, $fspc$  - plat surface particle count.\\ 
+Neighborhood samples search algorithm uses this quantity to pick as much samples in the neighborhood as required to save sharp features of the fluid surface.\\
+\\Based on a kernelDepth , kernelSize, kernelOffset and maxSamples data MC neighborhood search is applied to find the most suitable neighbors and consider them during computation of mls corrected SDF.\\
+Then mls corrected SDF value is computed. The  $performMlsCorrection()$ will be described in later section.\\
+For thin and small feature areas, where smoothing could bring artifacts smoothing factor is computed and applied to the final mls value as a weighted sum between the old SDF value and new mls corrected SDF value.
+
+
 \subsection{Kernel size and offset}
 \subsection{MLS neighborhood search}
 \subsection{Similarity threshold}
