@@ -1,5 +1,5 @@
 \chapter{Blur level set}
-During the reconstruction of the surface all methods, in one form or another (depending on the level set computation approach), are using particle displacement information. In the SPH based fluid simulation frameworks, the displacement is usually irregular, thus small gaps can be formed. These gaps are treated as undesirable low-frequency noise. The comparison of the surface reconstruction based on a regular and irregular displacement of the particles is in Figure \ref{fig:rec_vs_displacement}.
+During the reconstruction of the surface all methods in one form or another (depending on the level set computation approach) are using particle displacement information. In the SPH based fluid simulation frameworks fluid particle displacement usually are formed irregularly, thus small insufficient gaps or buimbs can be formed during the surface reconstruction phase, which are usually treated as undesirable low-frequency noise. The comparison of the surface reconstruction based on a regular and irregular displacement of the particles is in Figure \ref{fig:rec_vs_displacement}.
 \begin{figure}[H]
 	\begin{center}
 		\begin{subfigure}[b]{0.6\textwidth}
@@ -14,7 +14,8 @@ During the reconstruction of the surface all methods, in one form or another (de
 	\caption{displacement of particles vs surface quality comparison}
 	\label{fig:rec_vs_displacement}
 \end{figure}
-The main goal of this thesis is to develop a method, which will smooth out a high frequency bumps on flat surface areas, preserving the surface features. The first idea, that was applied to achieve this goal is simple blurring technique, which is extensively used in computer graphics, such as Gaussian Blur, Median blur, Bilateral blur or other image filtering techniques. In this chapter Blur-based method will be proposed to achieve the given goal. 
+The main goal of this thesis is to develop a method, which will smooth out a high frequency bumps on flat surface areas, preserving the surface features. The goal of this thesis is also to develop such a method, that will be computationally plausable.\\
+The first idea, that was applied to achieve stated requirements is simple blurring technique, which is extensively used in computer graphics, such as Gaussian Blur, Median blur, Bilateral blur or other image filtering techniques. In this chapter Blur-based method will be proposed. 
 \section{Algorithm description}
 Blur method was incorporated into the research framework according to the class hierarchy in Figure \ref{fig:class-diagam}. According to the class diagram, the method inherits the underlying base method (in our case its Density-Based, Zhu and Bridson, or Solenthaler methods), on top of which the computed level set is blurred.  Algorithm \ref{alg:blur_alg} shows the pseudo-code for \emph{updateLevelSet()}.
 \begin{algorithm}[H]
@@ -28,7 +29,7 @@ Blur method was incorporated into the research framework according to the class 
 	\caption{$updateLevelSet()$ for level set blurring method}
 	\label{alg:blur_alg}
 \end{algorithm}
-According to Algorithm \ref{alg:blur_alg} blurring of the level set could be performed arbitrary number of times. The influence of number of iterations will be explained in further section.
+According to Algorithm \ref{alg:blur_alg} blurring of the SDF could be performed arbitrary number of times. The influence of number of iterations will be explained in further section.
 
 The \emph{blurLevelSet()} pseudo-code is explained in Algorithm \ref{alg:blur_level_set}
 \begin{algorithm}[H]
@@ -50,7 +51,7 @@ The \emph{blurLevelSet()} pseudo-code is explained in Algorithm \ref{alg:blur_le
 \end{algorithm}
 The final blurred level set value in Algorythm \ref{alg:blur_level_set} is a wighted sum between the computed blur level set value and initial level set value.
 \subsection{Smoothing factor}
-The smoothing factor is a value that determines how much new, blurred level set value will contain initial level set value (weighted sum of blurred level set value and initial level set value). As described in \ref{alg:blur_level_set} level set value is updated according to the Equation \ref{eq:level_set_value}.
+The smoothing factor is a value that determines how much new, blurred SDF value of MC grid vertex will contain its initial SDF value (weighted sum of blurred level set value and initial level set value). As described in \ref{alg:blur_level_set} level set value is updated according to the Equation \ref{eq:level_set_value}.
 \begin{equation}
 newLS = oldLS \cdot (1 - sf) + blurLS \cdot sf \label{eq:level_set_value}
 \end{equation}
@@ -65,7 +66,7 @@ where:
 	maxFp & maximum possible fluid particles that can be in the neighborhood of the vertex \\
 	bsf & base support factor (use defined)
 \end{conditions}
-The smoothing factor formula was designed such that it should be maximal for vertices that contains full fluid particles set and minimum where number of fluid particles limits to zero (see Figure \ref{fig:sf_function_graph}).
+The smoothing factor formula was designed such that it should be maximal for MC grid vertices that contains full fluid particles set and minimum where number of fluid particles limits to zero (see Figure \ref{fig:sf_function_graph}).
 \begin{figure}[H]
 	\begin{center}
 			\includegraphics[width=0.5\textwidth]{figures/sf_function_graph.png}		
@@ -74,8 +75,7 @@ The smoothing factor formula was designed such that it should be maximal for ver
 	\label{fig:sf_function_graph}
 \end{figure}
 
-
-The motivation to apply such a smoothing factor comes from the problem of the blurring algorithm. If we apply the blur algorithm uniformly into all MC vertex domains, the blur will smooth out the features in thin areas and the areas with a small set of particles (droplets or splashes). Figure \ref{fig:smoothing_factor_influence} shows the problem of application of the blur algorithm w.o. application of smoothing factor.
+The motivation to apply such a smoothing factor comes from the problem of the blurring algorithm. If we apply the blur algorithm uniformly into all MC domain, the blur will smooth out the features in thin areas and the areas with a small set of particles (droplets or splashes). Figure \ref{fig:smoothing_factor_influence} shows the problem of application of the blur algorithm w.o. application of smoothing factor.
 
 \begin{figure}[H]
 	\begin{center}
@@ -86,7 +86,7 @@ The motivation to apply such a smoothing factor comes from the problem of the bl
 \end{figure}
 
 
-The idea of blurring using a smoothing factor is to blur the level set as much as possible in the areas where the surface of the fluid is flat and to apply less blur in areas, where a set of MC cells lacks fluid particles. Suppose the general case in Figure \ref{fig:sf_example}. In the figure red and yellow grid, vertices contain a full and half set of particles respectively. Level set values of the grid points are supposed to be blurred as much as possible.
+The idea of blurring using a smoothing factor is to blur the level set as much as possible in the areas where the surface of the fluid is flat and to apply less blur in areas, where a set of MC cells lacks fluid particles. Suppose the general case in Figure \ref{fig:sf_example}. In the figure red, yellow and orange grid vertices contain a full, half and quarter set of particles respectively. Level set values of the grid points are supposed to be blurred as much as possible near the flat fluid surface areas, but left unchanged in areas with small set of particles.
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.5\textwidth]{figures/SmoothingFactorPictureExplenation.png}		
@@ -94,9 +94,9 @@ The idea of blurring using a smoothing factor is to blur the level set as much a
 		\label{fig:sf_example}
 	\end{center}
 \end{figure}
-Applying blur to the level set vertices that are inside the fluid (and all its neighbor cells are also inside the fluid) will not change the level set value too much as soon all vertices that has full set of fluid particles in the neighborhood will have similar level set values. 
-For the MC vertices that are near the corners the 75\% of the neighbor vertices are outside the fluid, which will bias the vertex outside the fluid, thus the fluid will shrink. This is also relevant for the thin areas and splashes.\\
-At the figure \ref{fig:blur_w_o_sf} the effect of surface shrinkage of applying blur in the thin area and in the corners w.r.t. the initial reconstruction method can be observed. The flat surface is smoothed out, but at the same time surface at the thin and splash areas is degraded, some small features/droplets are lost.
+Applying blur to the level set vertices that are inside the fluid (and all its neighbor cells are also inside the fluid) will not change the level set value too much as soon all vertices that has full set of fluid particles in the neighborhood will have similar level set values.\\
+For the MC vertices that are near the corners the 75\% of the neighbor vertices are outside the fluid. In this case blur iteration will bias the vertex outside the fluid, thus the fluid will shrink. This is also relevant for the thin areas and splashes.\\
+At the figure \ref{fig:blur_w_o_sf} the effect of surface shrinkage of applying blur in the thin area and in the corners w.r.t. the initial reconstruction method can be observed. The flat surface is smoothed out, but at the same time surface sharpness at the thin and splash areas is degraded, some small features/droplets are lost.
 \begin{figure}[H]
 	\begin{center}
 		\begin{subfigure}[b]{\textwidth}
@@ -153,7 +153,7 @@ In the Algorithm \ref{alg:blur_level_set} MC neighbor vertices are computed in f
 						\State $continue$
 					\EndIf
 					
-					\State $neighbors \gets neighbors \cup (vtk + offsetVector)$
+					\State $neighbors \gets neighbors \cup (vtx + offsetVector)$
 				\EndFor
 			\EndFor
 		\EndFor
@@ -162,11 +162,100 @@ In the Algorithm \ref{alg:blur_level_set} MC neighbor vertices are computed in f
 	\caption{neighborhood search for level set blur algorithm}
 	\label{alg:blur_nbs_search}
 \end{algorithm}
-\subsection{Blur kernel size and offset}
-\textcolor{red}{TODO}
+\textcolor{red}{TODO: add more explanations}
+The algorithm traverses along all neighbor MC grid vertices within kernel size and kernel offset. It filters out a mesh vertices that are too fare from the reference vertex in a normal direction within a kernel depth. The normal is computed using a gradient of SDF in reference point. Well known forward differences are used to compute a gradient for the base vertex.
+\begin{equation}
+	\dfrac{\partial \phi}{\partial x} = \dfrac{\phi_{i+1} - \phi_i}{x_{i+1} - x_i}
+\end{equation}
+After computation of the gradient it is normalized, while only the unit normal is required. There is a degenerate case, when computed gradient vanishes. To handle this case computation of neighbors is imply skipped, and original SDF value is applied. After all, the probability of occurrence of such an event is too small. Figure \ref{fig:nghbrs_computation} shows the example of neighbors displacement with kernel size 3 and kernel depth 0.5.
+\begin{figure}[H]
+    \begin{subfigure}[b]{0.5\textwidth}
+           \includegraphics[width=\textwidth]{figures/NeighborsComputation.png}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.5\textwidth}
+           \includegraphics[width=\textwidth]{figures/NeighborsComputation2.png}
+    \end{subfigure}
 
+    \caption{resulting neighbors computed for one of the MC grid vertices (white points are computed neighbors)}
+    \label{fig:nghbrs_computation}
+\end{figure}
+\subsection{Blur kernel size and offset}
+The kernel size and kernel offset concept is widely used in a computer graphics blur algorithms. It is a widely used effect in graphics software, typically to reduce image noise and reduce detail. The visual effect of this blurring technique is a smooth blur resembling that of viewing the image through a translucent screen.\\
+The most popular blur technique applied in computer graphics is a Gaussian blur. Mathematically, applying a Gaussian blur to an image is the same as convolving the image with a Gaussian function. This is also known as a two-dimensional Weierstrass transform.\\
+Each pixel in the image gets multiplied by the Gaussian kernel. This is done by placing the center pixel of the kernel on the image pixel and multiplying the values in the original image with the pixels in the kernel that overlap. The values resulting from these multiplications are added up and that result is used for the value at the destination pixel.\\
+The kernel could be of an arbitrary size, e.g. uniform box kernel with kernel size 1: 
+$\begin{pmatrix}
+1 & 1 & 1\\
+1 & 1 & 1\\
+1 & 1 & 1
+\end{pmatrix}$, kernel size 2: 
+$\begin{pmatrix}
+1 & 1 & 1 & 1 & 1\\
+1 & 1 & 1 & 1 & 1\\
+1 & 1 & 1 & 1 & 1\\
+1 & 1 & 1 & 1 & 1\\
+1 & 1 & 1 & 1 & 1
+\end{pmatrix}$. This could be easely extended to a 3D case, which is useful in this work.\\
+The kernel offset, can be expressed as a smallest amount of steps over the neighborhood that should be performed to reach next sample, which will be used in blurring procedure. E.g. next matrix describes a kernel with kernel size 1 and kernel offset 2 : $
+\begin{pmatrix}
+	1 & 0 & 1 & 0 & 1\\
+	0 & 0 & 0 & 0 & 0\\
+	1 & 0 & 1 & 0 & 1\\
+	0 & 0 & 0 & 0 & 0\\
+	1 & 0 & 1 & 0 & 1
+\end{pmatrix}
+$.\\
+Both parameter influences a quality of a surface reconstruction. However kernel size also defines the runtime quality of the algorythm, as soon as kernel performance of the blur stageover the SDF depends cubically on the kernel size the total complexity of the blur stage can be expressed as $O(n\cdot k^3)$, where n is a number of MC grid vertices $k$ is a kernel size. In the other hand kernel offset doesn't influences the performance of the SDF blurring stage, as soon as according to the Algorithm \ref{alg:blur_nbs_search} it doesn't influences on the number of samples that will be picked for blurring.\\
+However expansion of the kernel size/offset has its limitation on the surface quality from smoothing out a sharp features up to bringing artifacts to the reconstructed surface. Figure \ref{fig:ksko} shows reconstructed surface with different evaluation of a kernel size and kernel offset.\\
+\begin{figure}[H]
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/DBBlur_ks-0_ko-0.png}
+               \caption{Original reconstruction}
+               \label{fig:kskdOrig}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/DBBlur_ks-1_ko-1.png}
+               \caption{kernel size 1, kernel offset 1}
+               \label{fig:ks1ko1}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/DBBlur_ks-1_ko-2.png}
+               \caption{kernel size 1, kernel offset 2}
+               \label{fig:ks1ko2}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/DBBlur_ks-1_ko-4.png}
+               \caption{kernel size 1, kernel offset 4}
+               \label{fig:ks1ko4}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/DBBlur_ks-2_ko-1.png}
+               \caption{kernel size 2, kernel offset 1}
+               \label{fig:ks2ko1}
+        \end{subfigure}        
+        \begin{subfigure}[b]{0.5\textwidth}
+               \includegraphics[width=\textwidth]{figures/DBBlur_ks-4_ko-1.png}
+               \caption{kernel size 4, kernel offset 1}
+               \label{fig:ks4ko1}
+        \end{subfigure}
+        \caption{Kernel size and kernel offset reconstruction comparison}
+        \label{fig:ksko}
+\end{figure}
+If the kernel size or a kernel offset i taken too large, so that the MC grid is out of bounds of the simulation, then SDF values of MC vertices near to the bounds of the grid will be biased too much to the fluid forming holes or parasite surfaces as in Figures \ref{fig:ks4ko1} and \ref{fig:ks1ko4}.
 \subsection{Kernel depth}
-The advantage of the static MC grid is that it has a static displacement of all grid vertices, thus the neighborhood can be efficiently computed. However, using the full neighborhood within the $kernelSize$ and $kernelOffset$ is not sufficient for level set blurring. As soon as the smoothing aims to remove bumps in the flat surface areas it is more practical to take into account level set vertices, that are in the neighborhood of the fluid surface. Thus, for each vertex of the level set gradient of the level set can be computed, and the gradient vector is normal to the fluid surface \cite{LevelSetMethods}. Thus for the flat surface areas, it is convenient to blur level set vertex value w.r.t. vertices, which resides in a tangential direction to the surface normal.
+The advantage of the static MC grid is that it has a static displacement of all grid vertices, thus the neighborhood can be efficiently computed. However, using the full neighborhood within the $kernelSize$ and $kernelOffset$ is not sufficient for level set blurring. As soon as the smoothing aims to remove bumps in the flat surface areas it is more practical to take into account level set vertices, that are in the neighborhood of the fluid surface. Thus, for each vertex of the level set gradient of the level set can be computed.
+The gradient of the implicit function for the SDF is defined as
+\begin{equation}
+	\nabla\phi = \left( \dfrac{\partial\phi}{\partial x}, \dfrac{\partial\phi}{\partial y}, \dfrac{\partial\phi}{\partial z}\right)
+\end{equation}
+The gradient $\nabla\phi$ is perpendicular to the isocontours of $\phi$ and points in the
+direction of increasing $\phi$. Therefore, if $x_0$ is a point on the zero isocontour
+of $\phi$, i.e., a point on the fluid surface, then $\nabla\phi$ evaluated at $x_0$ is a vector that points in the same direction as the local unit (outward) normal N to the interface. Thus, the unit (outward) normal for points on the interface is \cite{LevelSetMethods}
+\begin{equation}
+	N = \dfrac{\nabla\phi}{|\nabla \phi|}
+\end{equation}
+
+For flat surface areas it is convenient to blur SDF vertex values w.r.t. vertices, which resides in a tangential direction to the surface normal.
 
 \begin{figure}[H]
         \begin{subfigure}[b]{0.5\textwidth}
@@ -193,7 +282,7 @@ The advantage of the static MC grid is that it has a static displacement of all 
        \caption{Colored lines are iso-surface levels. Dots are MC grid vertices with their respective level set values}
        \label{fig:kd_surface_explenation}
  \end{figure}
-At the Figure \ref{fig:expected_fs} expected iso-surface in flat fluid area is displayed. Dots of different colors are the MC grid vertices. Colors represent the level set value. In the perfect case level set ISO-lines (in the 2D example) forms straight lines, thus MC grid vertices along the iso-line will receive similar values. However, due to the irregular displacement of fluid particles surface is usually reconstructed as shown in Figure \ref{fig:recon_fs}. In case if we apply full kernel size (see Figure \ref{fig:full_ks}) we will pick level set values from different iso-surface levels, which will change level set values unpredictably.\\
+At the Figure \ref{fig:expected_fs} expected iso-surface in flat fluid area is displayed. Dots of different colors are the MC grid vertices. Colors represent the level set value. In the perfect case level set ISO-lines (in the 2D example) forms straight lines, thus MC grid vertices along the iso-line will receive similar SDF evaluations. However, due to the irregular displacement of fluid particles surface is usually reconstructed as shown in Figure \ref{fig:recon_fs}. In case if we apply full kernel size (see Figure \ref{fig:full_ks}) we will pick level set values from different iso-surface levels, which will change level set values unpredictably.\\
 The better approach is to pick a kernel frame so that only level set values of near-surface MC vertices will be used for blur operation (Figure \ref{fig:partial_ks}). This way blur operation will smooth out grid vertices along the iso lines. Especially the influence of the kernel depth can be seen in thin areas, where kernel frame is larger than a thickness of a fluid surface (see Figure \ref{fig:kd_influence example}).
 \begin{figure}[H]
         \begin{subfigure}[b]{1\textwidth}
@@ -489,5 +578,5 @@ After performing previously described experimentations with the developed method
 In the future efforts can be applied to improve algorithm performance, e.g. porting blur stage on GPU. The blur stage of the algorithm.\\
 However, this method still has severe drawback - a problem of parametrization. There are multiple parameters that should be tunned, such as kernel size, kernel offset, kernel depth, smoothing factor, blur iterations. For different reconstruction methods, depending on the structure of the level set, simulation scale, performance and surface quality requirements, there is no golden middle for automatic application of the parametrization. Thus manual parameters tuning is required to achieve required reconstruction quality.\\
 Two approach can be used to define a parametrization - fix kernel size = 1, kernel offset = 0, kernel depth = 1 and modify number of blur iterations and smoothing factor. In this case performance will be improved, but blur will not be flexible to the near surface areas, thus sharp features could be smoothed too much.\\
-Another approach is to modify kernel size, kernel depth and smoothing factor, while keeping blur iterations fixed to 1. In this case most reconstruction method is more flexible to blurring low frequency bumps in flat surface areas, meanwhile saving most of the sharp features.
+Another approach is to modify kernel size, kernel depth and smoothing factor, while keeping blur iterations fixed to 1. In this case most reconstruction method is more flexible to blurring low frequency bumps in flat surface areas saving most of the sharp features, meanwhile the performance of the reconstruction will be degraded.
 
