@@ -145,10 +145,6 @@ After computing the 0-level intersection vertices of MC grid, clusters are compu
 				\State $maxSamples \gets MaxSamples \cdot maxSamplesFactor$
 
 				\State $cluster \gets getNeighbourCells(zeroVertexIntersectionCells, vertex, maxSamples)$
-				\State $removeParticles \gets max(1, cluster.size() \cdot SampleOverlapFactor)$
-				\ForAll{$i \in [0, removeParticles]$}
-					\State remove vertex at $cluster[i]$ from $vertices$
-				\EndFor
 				\State add cluster to clusters
 			\EndWhile
 			\State return clusters
@@ -252,18 +248,203 @@ Thus to pick samples from the buffer uniformly w.r.t. the distance from the cent
 	\caption{random sampling of indices's in the mls neighborhood}
 	\label{alg:mls_montecarlo_sampling}
 \end{algorithm}
-The idea of the algorithm is to generate sample from the sample set, and after that shift the index to the beginning. This way the probability distribution of the picking samples in the buffer will compensate the probability distribution of picking samples from specific distance from the central sample.
-% \begin{tikzpicture}
-% 	\begin{axis}
-% 		\addplot[color=red]{exp(x)}
-% 	\end{axis} 
-% \end{tikzpicture}
-Then the calculated $acceptedIndices$ are used to select samples form the buffer.\\
-\textcolor{red}{TODO: comparison figure of full neighborhood, uniformly w.r.t. buffer }\\
-\textcolor{red}{TODO: comparison of full set of samples and uniformly picked set of neighbors}\\
+The idea of the algorithm is to generate set of indexes from domain of mls neighborhood buffer, and after that shift the index to the beginning. This way the probability distribution of picking sample from specific distance from the center of the area will be compensated and converge to uniform distribution. Figure \ref{fig:distributions} shows the distributions of sampling indexes before quadratic shifting (uniformly pick the index of the buffer) and after (pick index uniformly and shift it according to the $x^2$ function).\\
+\begin{figure}
+	\begin{tikzpicture}
+		\begin{axis}
+			[
+				xlabel={$x$},
+				ylabel={$y$},
+				ymin = 0,
+				ymax = 0.1,
+				width = 0.45\textwidth
+			]
+			\addplot[
+				red,
+				mark=*
+			] table{initialDistributionOverLevels.txt};
+		\end{axis}
+
+	\end{tikzpicture}
+	\begin{tikzpicture}
+		\begin{axis}
+			[
+				xlabel={$x$},
+				ylabel={$y$},
+				ymin = 0,
+				ymax = 0.1,
+				width = 0.45\textwidth
+			]
+			\addplot[
+				blue,
+				mark=*
+			] table{resultingDistributionOverLevels.txt};
+		\end{axis}
+	\end{tikzpicture}
+	\caption{Initial distribution of the samples over area levels (left) and final distribution after modifying indexes (right)}
+	\label{fig:distributions}
+\end{figure}
+where $x$ is a probability of picking sample on level $i$ from the center of area, $y$ - is a depth of the level. The distributions where generated empirically by sampling 10000 indices's over the whole domain of the buffer. Figure \ref{fig:cluster_sampled} shows the cluster, with different sampling types.
+\begin{figure}[H]
+	\begin{center}
+		\begin{subfigure}[b]{0.9\textwidth}
+			\includegraphics[width=\textwidth]{figures/SamplingFullDomain.png}
+			\caption{full set of neighbors}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.9\textwidth}
+			\includegraphics[width=\textwidth]{figures/SamplingQuadratic.png}
+			\caption{set of samples with quadratic shift}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.9\textwidth}
+			\includegraphics[width=\textwidth]{figures/SamplingUniform.png}
+			\caption{uniformly sampled set}
+		\end{subfigure}
+	\end{center}
+	\caption{sampling of mls neighbor vertices set} \label{fig:cluster_sampled}
+\end{figure}
+In the quadratic shift sampling approach most of the samples are concentrated in the center of the cluster, thus compensating the number of samples, that are far away from the center and that are near to the center. In the uniform approach samples are spreader along the area.\\
+In Figure \ref{fig:surface_sampling_results} some examples of influence using sampled subset of the full set of particles is shown.
+\begin{figure}[H]
+	\begin{center}
+		\begin{subfigure}[b]{\textwidth}
+			\includegraphics[width=\textwidth]{figures/MLSSurfaceOriginal.png}
+			\caption{original surface}
+		\end{subfigure}
+		\begin{subfigure}[b]{\textwidth}
+			\includegraphics[width=\textwidth]{figures/MLSSurfaceSamplingFullSet.png}
+			\caption{mls corrected surface with full set of samples}
+		\end{subfigure}
+		\begin{subfigure}[b]{\textwidth}
+			\includegraphics[width=\textwidth]{figures/MLSSurfaceSamplingQuarterSet.png}
+			\caption{mls corrected surface with quarter set of samples}
+		\end{subfigure}
+	\end{center}
+	\caption{Reconstructed mls surface} \label{fig:surface_sampling_results}
+\end{figure}
+Both, full samples set and partial samples set removes bumps from the original surface, but for the reconstruction with $\dfrac{1}{4}$ set of mls samples small frequency noise can be seen on the corner areas.
 
 \subsection{Mls surface computation}
-\textcolor{red}{TODO}
+
+The core of the smoothing method is a computation of an approximated surface. 
+The main idea of computational approach was taken from the work of Guennebaud \& Gross \cite{Apss}. 
+Given a set of points $P = \{p_i \in R_d \}$, a smooth surface $S_P$ approximating $P$ using a moving least squares spherical fit to the data can be defined. However, in case of this study there is no set of points, that define surface and which should be approximated. As an input we receive a set of points, that are resided near the surface - e.g. the MC grid vertices, that are resided in the nearest neighborhood to the 0-level iso-surface. 
+Although, with the MC grid vertices we also have a values of the SDF, which theoretically define the distance to the surface. But in most cases the computed SDF doesn't represent an actual distance to the surface, but just an approximation of the distance, which is more approximate in the neighborhood of the 0-level iso-surface, but is not define the distance to the surface in the further areas of the fluid. 
+However, in the 0-level intersection areas SDF also doesn't exactly defines a distance to the surface, which is one of the reason of the occurrence of small frequency bubs on the reconstructed fluid surface. Thus applying mls approximation to the 0-level intersection MC vertices and correcting their SDF is an attempt to reconstruct a smooth distance based SDF.\\
+In the APSS work analytical equation of the sphere was used as a core function, that is approximated by applying least squares approximation to a samples set. Given a point $x$ the equation, that represents a distance to the sphere center can be represented as a function of x:
+\begin{equation}
+f(x) = s_1\cdot x^2 + s_2 \cdot x_x + s_3 \cdot x_y + s_4 \cdot x_z + s_5
+\end{equation}
+where $x^2$ is a dot product of point $x$ on itself, $s_i$ are unknown coefficients, that are going to be calculated. Thus the goal is to calculate the unknown coefficients $s_i$, and based to the approximated mls surface correct the sdf value by multiplying the MC grid vertex world coordinate by the coefficients:
+\begin{equation}
+SDF_{new}(x_i) = f(x_i) = s_1\cdot x_i^2 + s_2 \cdot x_{i_x} + s_3 \cdot x_{i_y} + s_4 \cdot x_{i_z} + s_5
+\end{equation}
+In the Algorithm \ref{alg:mls_alg} each MC grid vertex in the cluster $SDF_{new}$ is computed. As soon as each particle can appear in the cluster multiple times for each cluster, for which mls corrected surface is computed. Then the final SDF is a weighted sum of all sdf's, computed according to the Algorithm \ref{alg:mls_alg}, divided by total sum of weights:
+\begin{equation}
+	SDF_{mls}(x) = \dfrac{\sum_{j \in Clusters}{SDF_{new_j}(x)}}{|Clusters|}
+\end{equation}
+where $Clusters$ is a set of clusters, such that $: \forall cluster \in Clusters: x \in cluster$. 
+\subsection{Applying mls filter iteratively}
+In the Algorithm \ref{alg:mls_alg} it is stated that only computed 0-level intersection MC grid vertices are under the mls correction procedure. In the meantime the MC grid vertices, that are not taking part in surface mesh generation while cells no neighbor vertices contains SDF value transfer from positive to negative and vice-verse, thus the SDF correction procedure is not applied to this vertices. In this case next problem can arise: the corrected MC vertices can change the sign of SDF and will be no more in a subset of the 0-level intersection MC grid vertices, and non corrected vertices, that are in the neighborhood of the stated vertices, will not take part in surface generation. In the Figure \ref{fig:mls_iterations} shown the effect of applying mls correction on the 0-level intersection MC grid vertices:
+\begin{figure}[H]
+	\begin{center}
+		\begin{subfigure}[b]{0.9\textwidth}
+			\includegraphics[width=\textwidth]{figures/IntersectionCellsSdfBeforeMls_1_iter.png}	
+			\caption{Before mls smoothing} \label{fig:mls_0_iter}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.9\textwidth}
+			\includegraphics[width=\textwidth]{ figures/IntersectionCellsSdfAfterMls_1_iter.png}	
+			\caption{1 iterations of mls smoothing} \label{fig:mls_1_iter}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.9\textwidth}
+			\includegraphics[width=\textwidth]{figures/IntersectionCellsSdfAfterMls_3_iter.png}	
+			\caption{3 iterations of mls smoothing} \label{fig:mls_3_iter}
+		\end{subfigure}
+	\end{center}
+	\caption{Subset of 0-level intersection MC grid vertices with SDF values before and after mls smoothing. Red are vertices with positive SDF valuations, blue are vertices with negative SDF value.} 
+	\label{fig:mls_iterations}
+\end{figure}
+After application of mls it can be seen on the picture, that some MC grid vertices changed its SDF sign from negative to positive (Figure \ref{fig:mls_1_iter}). After 3 iterations of mls filter smoothing the effect of SDF sign switch is applied to smaller subset of MC grid vertices (Figure \ref{fig:mls_3_iter}). This can be explained by the convergence of the surface to some invariant state, since each iteration the average standard deviation of SDF values before and after the application of MLS among all clusters gradually decreases and converges to 0:
+\begin{figure}[H]
+	\begin{center}
+		\begin{tikzpicture}
+			\begin{axis}
+				[
+					xlabel={$x$},
+					ylabel={$y$},
+					width = 0.45\textwidth
+				]
+				\addplot[
+					red,
+					mark=*
+				] table{mls_std_dev.txt};
+			\end{axis}
+		\end{tikzpicture}
+	\end{center}
+	\caption{Standard deviation from initial SDF value to mls corrected (average among all clusters)}
+	\label{fig:mls_std_dev}
+\end{figure}
+There are some examples of reconstructed surface shown in the Figure \ref{fig:mls_surf_iter_examples} given different amount of iterations.
+\begin{figure}[H]
+	\begin{center}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/MlsSurfaceInitial.png}
+			\caption{original surface}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/MlsSurface1Iteration.png}
+			\caption{Mls correction 1 iteration}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/MlsSurface2Iteration.png}
+			\caption{Mls correction 2 iterations}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/MlsSurface3Iteration.png}
+			\caption{Mls correction 3 iterations}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/MlsSurface4Iteration.png}
+			\caption{Mls correction 4 iterations}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/MlsSurface5Iteration.png}
+			\caption{Mls correction 5 iterations}
+		\end{subfigure}
+	\end{center}
+	\caption{Reconstructed mls surface} \label{fig:mls_surf_iter_examples}
+\end{figure}
+\begin{figure}[H]
+	\begin{center}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/MLS2SurfaceOriginal.png}
+			\caption{original surface}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/Mls2Surface1Iteration.png}
+			\caption{Mls correction 1 iteration}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/Mls2Surface2Iteration.png}
+			\caption{Mls correction 2 iterations}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/Mls2Surface3Iteration.png}
+			\caption{Mls correction 3 iterations}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/Mls2Surface4Iteration.png}
+			\caption{Mls correction 4 iterations}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/Mls2Surface5Iteration.png}
+			\caption{Mls correction 5 iterations}
+		\end{subfigure}
+	\end{center}
+	\caption{Reconstructed mls surface} \label{fig:mls_surf_iter_examples}
+\end{figure}
+
+The more iterations are applied for the mls correction the smoother surface we receive. However, according to the figure \ref{fig:mls_surf_iter_examples} large amount of iteration destroys tiny fluid features, such as splashes, or shrinks fluid surface in thin areas. This can be controlled via the smoothing factor calibration, but for the purpose of this thesis, removal of small frequency bumps on the reconstructed surface, one iteration is enough in most cases.
+
 \section{Performance analysis}
 \section{Results}
 \section{Conclusions}
