@@ -207,7 +207,7 @@ The kernel offset, can be expressed as a smallest amount of steps over the neigh
 $.\\
 Both parameter influences a quality of a surface reconstruction. However kernel size also defines the runtime quality of the algorythm, as soon as kernel performance of the blur stageover the SDF depends cubically on the kernel size the total complexity of the blur stage can be expressed as $O(n\cdot k^3)$, where n is a number of MC grid vertices $k$ is a kernel size. In the other hand kernel offset doesn't influences the performance of the SDF blurring stage, as soon as according to the Algorithm \ref{alg:blur_nbs_search} it doesn't influences on the number of samples that will be picked for blurring.\\
 However expansion of the kernel size/offset has its limitation on the surface quality from smoothing out a sharp features up to bringing artifacts to the reconstructed surface. Figure \ref{fig:ksko} shows reconstructed surface with different evaluation of a kernel size and kernel offset.\\
-\begin{figure}[H]
+\begin{figure}
         \begin{subfigure}[b]{0.5\textwidth}
                \includegraphics[width=\textwidth]{figures/DBBlur_ks-0_ko-0.png}
                \caption{Original reconstruction}

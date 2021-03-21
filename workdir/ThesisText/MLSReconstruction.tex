@@ -249,7 +249,7 @@ Thus to pick samples from the buffer uniformly w.r.t. the distance from the cent
 	\label{alg:mls_montecarlo_sampling}
 \end{algorithm}
 The idea of the algorithm is to generate set of indexes from domain of mls neighborhood buffer, and after that shift the index to the beginning. This way the probability distribution of picking sample from specific distance from the center of the area will be compensated and converge to uniform distribution. Figure \ref{fig:distributions} shows the distributions of sampling indexes before quadratic shifting (uniformly pick the index of the buffer) and after (pick index uniformly and shift it according to the $x^2$ function).\\
-\begin{figure}
+\begin{figure}[H]
 	\begin{tikzpicture}
 		\begin{axis}
 			[
@@ -285,7 +285,7 @@ The idea of the algorithm is to generate set of indexes from domain of mls neigh
 	\label{fig:distributions}
 \end{figure}
 where $x$ is a probability of picking sample on level $i$ from the center of area, $y$ - is a depth of the level. The distributions where generated empirically by sampling 10000 indices's over the whole domain of the buffer. Figure \ref{fig:cluster_sampled} shows the cluster, with different sampling types.
-\begin{figure}[H]
+\begin{figure}
 	\begin{center}
 		\begin{subfigure}[b]{0.9\textwidth}
 			\includegraphics[width=\textwidth]{figures/SamplingFullDomain.png}
@@ -304,7 +304,7 @@ where $x$ is a probability of picking sample on level $i$ from the center of are
 \end{figure}
 In the quadratic shift sampling approach most of the samples are concentrated in the center of the cluster, thus compensating the number of samples, that are far away from the center and that are near to the center. In the uniform approach samples are spreader along the area.\\
 In Figure \ref{fig:surface_sampling_results} some examples of influence using sampled subset of the full set of particles is shown.
-\begin{figure}[H]
+\begin{figure}
 	\begin{center}
 		\begin{subfigure}[b]{\textwidth}
 			\includegraphics[width=\textwidth]{figures/MLSSurfaceOriginal.png}
@@ -369,8 +369,8 @@ After application of mls it can be seen on the picture, that some MC grid vertic
 		\begin{tikzpicture}
 			\begin{axis}
 				[
-					xlabel={$x$},
-					ylabel={$y$},
+					xlabel=iterations,
+					ylabel=error,
 					width = 0.45\textwidth
 				]
 				\addplot[
@@ -380,11 +380,11 @@ After application of mls it can be seen on the picture, that some MC grid vertic
 			\end{axis}
 		\end{tikzpicture}
 	\end{center}
-	\caption{Standard deviation from initial SDF value to mls corrected (average among all clusters)}
+	\caption{Total standard deviation of each grid vertex's SDF before and after mls correction}
 	\label{fig:mls_std_dev}
 \end{figure}
-There are some examples of reconstructed surface shown in the Figure \ref{fig:mls_surf_iter_examples} given different amount of iterations.
-\begin{figure}[H]
+There are some examples of reconstructed surface shown in the Figure \ref{fig:mls_surf_iter_examples} and \ref{fig:mls_surf_iter_examples2} given different amount of iterations.
+\begin{figure}
 	\begin{center}
 		\begin{subfigure}[b]{0.47\textwidth}
 			\includegraphics[width=\textwidth]{figures/MlsSurfaceInitial.png}
@@ -413,7 +413,7 @@ There are some examples of reconstructed surface shown in the Figure \ref{fig:ml
 	\end{center}
 	\caption{Reconstructed mls surface} \label{fig:mls_surf_iter_examples}
 \end{figure}
-\begin{figure}[H]
+\begin{figure}
 	\begin{center}
 		\begin{subfigure}[b]{0.47\textwidth}
 			\includegraphics[width=\textwidth]{figures/MLS2SurfaceOriginal.png}
@@ -440,11 +440,188 @@ There are some examples of reconstructed surface shown in the Figure \ref{fig:ml
 			\caption{Mls correction 5 iterations}
 		\end{subfigure}
 	\end{center}
-	\caption{Reconstructed mls surface} \label{fig:mls_surf_iter_examples}
+	\caption{Reconstructed mls surface} 
+	\label{fig:mls_surf_iter_examples2}
 \end{figure}
 
-The more iterations are applied for the mls correction the smoother surface we receive. However, according to the figure \ref{fig:mls_surf_iter_examples} large amount of iteration destroys tiny fluid features, such as splashes, or shrinks fluid surface in thin areas. This can be controlled via the smoothing factor calibration, but for the purpose of this thesis, removal of small frequency bumps on the reconstructed surface, one iteration is enough in most cases.
+The more iterations are applied for the mls correction the smoother surface we receive. However, the most of the smoothing work is done during first two or three iterations. Sum of squared errors falls very fast during first iterations and stays on the same level during further iteration, which means that there is not much smoothing applied to the level set. On the other hand according to the figure \ref{fig:mls_surf_iter_examples} large amount of iteration can destroy tiny fluid features, such as splashes, or shrinks fluid surface in thin areas. This can be controlled via the smoothing factor calibration, but for the purpose of this thesis, removal of small frequency bumps on the reconstructed surface, one iteration is enough in most cases.
 
 \section{Performance analysis}
-\section{Results}
+The performance of the mls smoothing filter will be measured w.r.t. the number of MlsSamples, MaxMlsSamples, number of iterations.All measurements was made on the AMD Ryzen 5 3550H. For transparent algorithm evaluation all computations were performed on single processor.\\
+Table \ref{tab:mls_initial_method} shows the evaluated performance density based reconstruction method.
+\begin{table}[H]
+	\begin{center}
+		\scriptsize
+		\begin{tabular}{|l|c|}
+			\hline
+			Stage & time \\
+			\hline
+				configureHashTables	&	0.076903\\
+				getTriangles	&	0.499455\\
+				total execution time	&	6.029499\\
+				updateGrid	&	1.337325\\
+				updateLevelSet	&	3.736989\\
+				updateSurfaceParticles	&	0.287444\\
+			\hline
+		\end{tabular}
+	\end{center}
+	\caption{Initial performance evaluation for density based reconstruction}
+	\label{tab:mls_initial_method}
+\end{table}
+Table \ref{tab:mls_ms_perf} shows evaluated performance of the mls filter depending on the number of samples taken for the computation of mls surface (MlsSamples). In this test MlsMaxSamples is explicitly set to the MlsSamples
+\begin{table}[H]
+	\begin{center}
+		\scriptsize
+		\begin{tabular}{|l|c|c|c|}
+			\hline
+			MlsSamples & 100 & 200 & 300 \\
+			\hline
+			configureHashTables		&	0.078537	&	0.076541	&	0.083138\\
+			getTriangles			&	0.538212	&	0.510159	&	0.505589\\
+			mlsSmoothPath			&	33.357061	&	72.295714	&	119.967774\\
+			total execution time	&	39.713907	&	78.652220	&	126.201645\\
+			updateGrid				&	1.459942	&	1.461316	&	1.437795\\
+			updateLevelSet			&	37.277470	&	76.245051	&	123.824661\\
+			updateSurfaceParticles	&	0.289628	&	0.287632	&	0.286882\\
+			\hline
+		\end{tabular}
+	\end{center}
+	\caption{Initial performance evaluation for density based reconstruction}
+	\label{tab:mls_ms_perf}
+\end{table}
+Table \ref{tab:mls_mms_perf} shows evaluated performance of the mls filter depending on the number of maximum number of samples  (MaxMlsSamples) taking fixed number of MlsSamples, in this test MlsSamples=400.
+\begin{table}[H]
+	\begin{center}
+		\scriptsize
+		\begin{tabular}{|l|c|c|c|c|}
+			\hline
+			MaxMlsSamples & 50 & 100 & 150 & 200 \\
+			\hline
+			configureHashTables     	& 0.081193	&	0.081389	& 0.078795		& 0.077161\\
+			getTriangles    			& 0.566251	&	0.565616	& 0.554958		& 0.535509\\
+			mlsSmoothPath   			& 87.600709	&	94.290563	& 104.010487	& 116.572329\\
+			total execution time    	& 94.378367	&	100.942730	& 110.744296	& 123.356513\\
+			updateGrid      			& 1.585025	&	1.531106	& 1.586204		& 1.596259\\
+			updateLevelSet  			& 91.765409	&	98.396836	& 108.144850	& 120.773621\\
+			updateSurfaceParticles  	& 0.301292	&	0.298913	& 0.307338		& 0.308659\\
+			\hline
+		\end{tabular}
+	\end{center}
+	\caption{Initial performance evaluation for density based reconstruction}
+	\label{tab:mls_mms_perf}
+\end{table}
+Table \ref{tab:mls_iter_perf} shows evaluated performance of the mls filter depending on the number of filter iterations taking fixed number of MlsSamples=200, and MaxSamples=50.
+\begin{table}[H]
+	\begin{center}
+		\scriptsize
+		\begin{tabular}{|l|c|c|c|c|}
+			\hline
+			Iterations & 1 & 2 & 3 & 4 \\
+			\hline
+			configureHashTables     	& 0.076567	&	0.084189	& 0.078997		& 0.083295\\
+			getTriangles    			& 0.606721	&	0.583862	& 0.644775		& 0.524303\\
+			mlsSmoothPath   			& 49.395048	&	97.056469	& 144.075857	& 187.602832\\
+			total execution time    	& 56.223171	&	103.919529	& 151.014921	& 194.276611\\
+			updateGrid      			& 1.578684	&	1.586247	& 1.566563		& 1.565801\\
+			updateLevelSet  			& 53.585239	&	101.285508	& 148.343585	& 191.733618\\
+			updateSurfaceParticles  	& 0.301436	&	0.311386	& 0.300734		& 0.304806\\
+			\hline
+		\end{tabular}
+	\end{center}
+	\caption{Performance evaluation depending on the number of smoothing iterations}
+	\label{tab:mls_iter_perf}
+\end{table}
+All parameters shows linear time expansion of SDF computation depending on the parameter size.
+
+\section{Surface reconstruction results}
+In this section some scenes representing the quality of the filter and reconstructed surface are shown. 
+Figure \ref{fig:db_mls_reconstruction1} and \ref{fig:db_mls_reconstruction2} shows the reconstructed surface using density based method.
+\begin{figure}
+	\begin{center}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/DDMOriginal1.png}
+			\caption{original surface}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/DDMMls1.png}
+			\caption{Mls correction smoothed}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/DDMOriginal2.png}
+			\caption{original surface}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/DDMMls2.png}
+			\caption{Mls correction smoothed}
+		\end{subfigure}
+	\end{center}
+	\caption{Original density based surface with mls smoothing comparison} \label{fig:db_mls_reconstruction1}
+\end{figure}
+\begin{figure}
+	\begin{center}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/DDMOriginal3.png}
+			\caption{original surface}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/DDMMls3.png}
+			\caption{Mls correction smoothed}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/DDMOriginal4.png}
+			\caption{original surface}
+		\end{subfigure}\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/DDMMls4.png}
+			\caption{Mls correction smoothed}
+		\end{subfigure}
+	\end{center}
+	\caption{Original density based surface with mls smoothed surface comparison} \label{fig:db_mls_reconstruction2}
+\end{figure}
+On Figures \ref{fig:db_mls_reconstruction3} and \ref{fig:db_mls_reconstruction4} surface reconstruction of canyon scene is presented.
+
+\begin{figure}
+	\begin{center}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/CanionOriginal1.png}
+			\caption{original surface}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/CanionMls1.png}
+			\caption{Mls correction smoothed}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/CanionOriginal2.png}
+			\caption{original surface}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/CanionMls2.png}
+			\caption{Mls correction smoothed}
+		\end{subfigure}
+	\end{center}
+	\caption{Original density based surface with mls smoothing comparison} \label{fig:db_mls_reconstruction3}
+\end{figure}
+\begin{figure}
+	\begin{center}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/CanionOriginal3.png}
+			\caption{Mls correction smoothed}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/CanionMls3.png}
+			\caption{original surface}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/CanionOriginal4.png}
+			\caption{Mls correction smoothed}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.47\textwidth}
+			\includegraphics[width=\textwidth]{figures/CanionMls4.png}
+			\caption{original surface}
+		\end{subfigure}
+	\end{center}
+	\caption{Original density based surface with mls smoothing comparison} \label{fig:db_mls_reconstruction4}
+\end{figure}
 \section{Conclusions}
+Mls smoothing filter proven to be a good alternative of blur filter. The mls filter is is much more stable then the blur filter. As was already shown iterative application of the method converges to some defined surface. Iterative application doesn't destroys continuous areas of the surface. The filter could be configured so, that small features, such that droplets or splashes in the reconstructed scene could be preserved, in the mean time undesired bumps are removed.\\
+However, the most negative disadvantage of applying the mls filter is its computation time. The total complexity of the algorithm  is $O(n*m)$, where $n$ is set of 0-level intersection cells and $m$ is a set of MlsSamples. By applying Monte Carlo approaches it is possible to uniformly sample $N \subseteq n$ and $M \subseteq m$, such that the total execution time of the reconstruction could be decreased, in the mean time not sacrificing too much the final quality of the reconstructed surface.\\
+The future work can be applied to massively parallelize the algorithm so that it can be ran on the HPC clusters, or even port the computations on the GPU. Another good application of the mls smoothing filter is a generation of a training set for the neural network filter, which can be trained and then applied during the reconstruction.
