@@ -321,7 +321,47 @@ In Figure \ref{fig:surface_sampling_results} some examples of influence using sa
 	\end{center}
 	\caption{Reconstructed mls surface} \label{fig:surface_sampling_results}
 \end{figure}
-Both, full samples set and partial samples set removes bumps from the original surface, but for the reconstruction with $\dfrac{1}{4}$ set of mls samples small frequency noise can be seen on the corner areas.
+Both, full samples set and partial samples set removes bumps from the original surface, but for the reconstruction with $\dfrac{1}{4}$ set of mls samples small frequency noise can be seen on the corner areas.\\
+
+\subsection{Clusters density factor}
+According to the algorithm \ref{alg:mls_alg} clusters are computed for each 0-level intersection cell, and after this mls approximation is applied to each intersection cell in the, that resides in the cluster. This means that each 0-level intersection MC vertex takes part in multiple clusters during the mls approximation. However, for fluid surface smoothing it is enough to generate clusters only for a subset of the 0-level intersection cells such that depending on the size of the cluster while domain of the 0-level instersection vertices will be mls corrected. For example see figure \ref{fig:mls_clusters_sparse_generations}:
+\begin{figure}[H]
+	\begin{center}
+		\begin{subfigure}[b]{0.48\textwidth}
+			\includegraphics[width=\textwidth]{figures/FullDomainClusters.png}
+			\caption{} \label{fig:mls_clusters_sparse_generations_nonsparse}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.48\textwidth}
+			\includegraphics[width=\textwidth]{figures/PartialDomainClusters.png}
+			\caption{} \label{fig:mls_clusters_sparse_generations_sparse}
+		\end{subfigure}
+	\end{center}
+	\caption{Comparison of sparse and non sparse clusters computation.} \label{fig:mls_clusters_sparse_generations}
+\end{figure} 
+Filled vertices are the MC grid vertices for which clusters are generated, and then mls correction is computed. Generating clusters for each vertex in a set of 0-level intersection vertices will lead to inclusion of the vertex into clusters, that are formed within the vertices, that are resided in the current cluster, e.g. for vertex $gv$ and generated cluster $Cluster_{gv}$ for this vertex $\forall v \in Cluster_{gv}: gv \in Cluster_v$. This might be redundant while smooth mls approximation is already computed for one of the clusters, which contains all the vertices. Thus clusters can be computed not for all domain of 0-level intersection vertices but just for a subset of the domain (see figure \ref{fig:mls_clusters_sparse_generations_nonsparse}). However, it is important to generate clusters such that they overlap, while for different clusters different surface approximations is computed and thus in the border areas non-smooth transitions can be observed. To accomplish this problem ClusterFactor ($cf$) is used. ClusterFactor identifies the fraction of the 0-level intersection vertices for which clusters will be computed. For simplicity $cf \cdot n$ out of $n$ 0-level intersection vertices will be picked uniformly at random. Figure \ref{fig:mls_sparse_clusters_reconstruction} shows the results of the reconstruction given different valuations of $ClusterFactor$.
+\begin{figure}[H]
+	\begin{center}
+		\begin{subfigure}[b]{0.46\textwidth}
+			\includegraphics[width=\textwidth]{figures/MlsSparseClustersOriginalpng.png}
+			\caption{Original reconstruction} \label{fig:mls_clusters_original}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.46\textwidth}
+			\includegraphics[width=\textwidth]{figures/MlsSparseClusters0.01.png}
+			\caption{ClusterFactor = 0.01} \label{fig:mls_clusters_sparse_0.01}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.46\textwidth}
+			\includegraphics[width=\textwidth]{figures/MlsSparseClusters0.5.png}
+			\caption{ClusterFactor = 0.5} \label{fig:mls_clusters_sparse_0.5}
+		\end{subfigure}
+		\begin{subfigure}[b]{0.46\textwidth}
+			\includegraphics[width=\textwidth]{figures/MlsSparseClusters1.png}
+			\caption{ClusterFactor = 1} \label{fig:mls_clusters_sparse_1}
+		\end{subfigure}
+
+	\end{center}
+	\caption{Comparison reconstruction which uses full domain of 0-level intersection cells for clusters computation and subset of 0-level intersection cells depending on the ClusterFactor.} \label{fig:mls_sparse_clusters_reconstruction}
+\end{figure} 
+Taking into account that the number of mls vertices in the cluster is 100, mls smoothing over the 0-level intersection vertices with ClusterFactor 0.01 is generating clusters without overlap, thus on the figure \ref{fig:mls_clusters_sparse_0.01} the reconstructed surface looks such as if the surface was built from parts of spheres. In the other hand taking $ClusterFactor = 0.5$ reconstructed surface looks much smoother (see figure \ref{fig:mls_clusters_sparse_0.5}).
 
 \subsection{Mls surface computation}
 
