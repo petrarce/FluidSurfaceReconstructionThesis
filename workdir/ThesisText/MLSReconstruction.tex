@@ -231,7 +231,7 @@ Neighbors detection is described in pseudo-code of Algorithm \ref{alg:mls_nbsear
 	\label{alg:mls_nbsearch}
 \end{algorithm}
 As an input procedure receives a $BaseMcVertex$ - a MC vertex for which neighborhood cluster is going to be computed, $ZeroLevelIntersectionVertices$ - 0-level intersection MC vertices explained previously, and $SelectedIndices$ - a set of indexes of neighbors, that should be accepted as a samples (more explanations are in the next section). The procedure returns a set of MC grid vertices, that are in the nearest neighborhood within a requested $BaseMcVertex$, and which are in a set of 0-level intersection MC vertices. The computed array has some important properties, that will be exploited further. First of all, the further the neighbor is from the base cell the higher index it has inside the array. Figure \ref{fig:mls_neighbor_alignment} shows the example of alignment of detected cluster neighbors in the set of 0-level intersection vertices.\\
-\begin{figure}
+\begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=\textwidth]{figures/MlsSamplesBufferAlignment.png}
 	\end{center}
@@ -648,7 +648,10 @@ Table \ref{tab:mls_iter_perf} shows evaluated performance of the mls filter depe
 	\caption{Performance evaluation depending on the number of smoothing iterations}
 	\label{tab:mls_iter_perf}
 \end{table}
-All parameters shows linear time expansion on the reconstruction time for $mlsSmoothPath$ stage.
+
+Table \ref{tab:cluster_factor} shows evaluated performance of the mls filter depending on the ClusterFactor.
+\textcolor{red}{TODO: add ClusterFactor performance evaluation}
+In general all parameters shows linear time expansion on the reconstruction time for $mlsSmoothPath$ stage.
 
 \section{Surface reconstruction results}
 In this section some scenes representing the quality of the filter and reconstructed surface are shown. 
