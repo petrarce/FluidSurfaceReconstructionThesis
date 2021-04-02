@@ -561,10 +561,10 @@ There are some examples of reconstructed surface shown in the Figure \ref{fig:ml
 	\label{fig:mls_surf_iter_examples2}
 \end{figure}
 
-The more iterations are applied for the mls correction the smoother surface we receive. However, the most of the smoothing work is done during first two or three iterations. Sum of squared errors falls very fast during first iterations and stays on the same level during further iteration, which means that there is not much smoothing applied to the level set. On the other hand according to the figure \ref{fig:mls_surf_iter_examples} large amount of iteration can destroy tiny fluid features, such as splashes, or shrinks fluid surface in thin areas. This can be controlled via the smoothing factor calibration, but for the purpose of this thesis, removal of small frequency bumps on the reconstructed surface, one iteration is enough in most cases.
+The more iterations are applied for the mls correction the smoother surface we receive. However, the most of the smoothing work is done during first two or three iterations. Sum of squared errors falls very fast during first two iterations and stays on the same level during further iteration, which means that there is not much smoothing applied to the level set after the first two iterations. On the other hand according to the figure \ref{fig:mls_surf_iter_examples} large amount of iteration can destroy tiny fluid features, such as splashes and thin areas near the border of the fluid surface. This can be controlled via calibration of the smoothing factor, but for the purpose of this thesis, removal of small frequency bumps on the reconstructed surface, one iteration is enough in most cases.
 
 \section{Performance analysis}
-The performance of the mls smoothing filter will be measured w.r.t. the number of MlsSamples, MaxMlsSamples, number of iterations.All measurements was made on the AMD Ryzen 5 3550H. For transparent algorithm evaluation all computations were performed on single processor.\\
+The performance of the mls smoothing filter will be measured w.r.t. the number of MlsSamples, MaxMlsSamples, number of iterations. All measurements was performed on the AMD Ryzen 5 3550H. For transparent algorithm evaluation all computations were performed on single processor. All evaluations are displayed in seconds. Reconstruction was performed on the 2 frames of fluid scene with 40000 SPH particles. Note that in the mls reconstructions $updateLevelSet$ is a total of underlying methods initial $updateLevelSet$ and $mlsSmoothPath$ applied on top of that.\\
 Table \ref{tab:mls_initial_method} shows the evaluated performance density based reconstruction method.
 \begin{table}[H]
 	\begin{center}
@@ -650,7 +650,27 @@ Table \ref{tab:mls_iter_perf} shows evaluated performance of the mls filter depe
 \end{table}
 
 Table \ref{tab:cluster_factor} shows evaluated performance of the mls filter depending on the ClusterFactor.
-\textcolor{red}{TODO: add ClusterFactor performance evaluation}
+\begin{table}[H]
+	\begin{center}
+		\scriptsize
+		\begin{tabular}{|l|c|c|c|c|c|}
+			\hline
+			ClusterFactor & 0.1 & 0.2 & 0.4 & 0.8 & 1 \\
+			\hline
+			configureHashTables    	&	0.076390	&	0.074464	&	0.076946	&	0.078014	&	0.077265\\
+			getTriangles    		&	0.501665	&	0.503932	&	0.504590	&	0.510349	&	0.507719\\
+			mlsSmoothPath   		&	4.791562	&	8.289250	&	15.761765	&	29.372052	&	36.577372\\
+			total execution time   	&	13.610064	&	17.358378	&	24.563267	&	38.239182	&	45.699859\\
+			updateGrid      		&	1.448008	&	1.456376	&	1.434868	&	1.465417	&	1.458499\\
+			updateLevelSet  		&	11.196505	&	14.933524	&	22.164599	&	35.807620	&	43.258932\\
+			updateSurfaceParticles 	&	0.291530	&	0.291450	&	0.290358	&	0.290106	&	0.293439\\
+			\hline
+		\end{tabular}
+	\end{center}
+	\caption{Performance evaluation depending on the size of the ClusterFactor}
+	\label{tab:cluster_factor}
+\end{table}
+
 In general all parameters shows linear time expansion on the reconstruction time for $mlsSmoothPath$ stage.
 
 \section{Surface reconstruction results}
