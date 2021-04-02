@@ -370,7 +370,7 @@ where $x$ is a probability of picking sample on distance level $i$ from the cent
 		\end{subfigure}
 		\begin{subfigure}[b]{0.9\textwidth}
 			\includegraphics[width=\textwidth]{figures/SamplingQuadratic.png}
-			\caption{set of samples with quadratic shift}
+			\caption{set sampled with quadratic shift}
 		\end{subfigure}
 		\begin{subfigure}[b]{0.9\textwidth}
 			\includegraphics[width=\textwidth]{figures/SamplingUniform.png}
@@ -462,7 +462,7 @@ In the Algorithm \ref{alg:mls_alg} each MC grid vertex in the cluster $SDF_{new}
 where $Clusters$ is a set of clusters, such that $: \forall cluster \in Clusters: x \in cluster$. 
 \subsection{Applying MLS filter iteratively}
 In the Algorithm \ref{alg:mls_alg} it is stated that only computed 0-level intersection MC grid vertices are under the MLS correction procedure. In the meantime, the MC grid vertices, that are not taking part in surface mesh generation while cells no neighbor vertices contain SDF value transfer from positive to negative and vice-versa, thus the SDF correction procedure is not applied to these vertices. In this case, the next problem can arise: the corrected MC vertices can change the sign of SDF and will be no more in a subset of the 0-level intersection MC grid vertices, and non corrected vertices, that are in the neighborhood of the stated vertices, will not take part in a surface generation. In the Figure \ref{fig:mls_iterations} shown the effect of applying MLS correction on the 0-level intersection MC grid vertices:
-\begin{figure}[H]
+\begin{figure}
 	\begin{center}
 		\begin{subfigure}[b]{0.9\textwidth}
 			\includegraphics[width=\textwidth]{figures/IntersectionCellsSdfBeforeMls_1_iter.png}	
