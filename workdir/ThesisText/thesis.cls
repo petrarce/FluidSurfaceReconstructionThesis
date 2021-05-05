@@ -111,7 +111,7 @@
   The present work was submitted to the\\
   \vspace*{.75cm}
   Visual Computing Institute\par
-  Faculty of Mathematics, Computer Science and Natural Sciences\par
+  Computer Animation Department\par
   RWTH Aachen University\par}
   \vspace*{\stretch{2}}\par
   {\LARGE\bfseries\@thesisTitle\par}

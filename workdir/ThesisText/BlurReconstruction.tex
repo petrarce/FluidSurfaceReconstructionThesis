@@ -1,6 +1,8 @@
 \chapter{SDF blur filter}
 During the reconstruction of the surface all methods in one form or another (depending on the level set computation approach) are using particle displacement information. In the SPH based fluid simulation frameworks fluid particle displacement usually are formed irregularly, thus small insufficient gaps or buimbs can be formed during the surface reconstruction phase, which are usually treated as undesirable low-frequency noise. The comparison of the surface reconstruction based on a regular and irregular displacement of the particles is in Figure \ref{fig:rec_vs_displacement}.
-\begin{figure}[H]
+The main goal of this thesis is to develop a method, which will smooth out a high frequency bumps on flat surface areas, preserving the surface features. The goal of this thesis is also to develop such a method, that will be computationally plausible.\\
+The first idea, that was applied to achieve stated requirements is simple blurring technique, which is extensively used in computer graphics, such as Gaussian Blur, Median blur, Bilateral blur or other image filtering techniques. In this chapter Blur-based method will be proposed. 
+\begin{figure}[h]
 	\begin{center}
 		\begin{subfigure}[b]{0.6\textwidth}
 			\includegraphics[width=\textwidth]{figures/FlatSurfaceWsParticleDisplacement.png}
@@ -14,8 +16,6 @@ During the reconstruction of the surface all methods in one form or another (dep
 	\caption{displacement of particles vs surface quality comparison}
 	\label{fig:rec_vs_displacement}
 \end{figure}
-The main goal of this thesis is to develop a method, which will smooth out a high frequency bumps on flat surface areas, preserving the surface features. The goal of this thesis is also to develop such a method, that will be computationally plausable.\\
-The first idea, that was applied to achieve stated requirements is simple blurring technique, which is extensively used in computer graphics, such as Gaussian Blur, Median blur, Bilateral blur or other image filtering techniques. In this chapter Blur-based method will be proposed. 
 \section{Algorithm description}
 Blur method was incorporated into the research framework according to the class hierarchy in Figure \ref{fig:class-diagam}. According to the class diagram, the method inherits the underlying base method (in our case its Density-Based, Zhu and Bridson, or Solenthaler methods), on top of which the computed level set is blurred.  Algorithm \ref{alg:blur_alg} shows the pseudo-code for \emph{updateLevelSet()}.
 \begin{algorithm}[H]
@@ -50,7 +50,7 @@ The \emph{blurLevelSet()} pseudo-code is explained in Algorithm \ref{alg:blur_le
 	\label{alg:blur_level_set}
 \end{algorithm}
 The final blurred level set value in Algorythm \ref{alg:blur_level_set} is a wighted sum between the computed level set value and initial level set value.
-\subsection{Smoothing factor}
+\subsection{Smoothing factor} \label{sec:smoothing_factor}
 The smoothing factor is a value that determines how much new, blurred SDF value of MC grid vertex will contain its initial SDF value (weighted sum of blurred level set value and initial level set value). As described in \ref{alg:blur_level_set} level set value is updated according to the Equation \ref{eq:level_set_value}.
 \begin{equation}
 newLS = oldLS \cdot (1 - sf) + blurLS \cdot sf \label{eq:level_set_value}
@@ -76,8 +76,15 @@ The smoothing factor formula was designed such that it should be maximal for MC 
 \end{figure}
 
 The motivation to apply such a smoothing factor comes from the problem of the blurring algorithm. If we apply the blur algorithm uniformly into all MC domain, the blur will smooth out the features in thin areas and the areas with a small set of particles (droplets or splashes). Figure \ref{fig:smoothing_factor_influence} shows the problem of application of the blur algorithm w.o. application of smoothing factor.
-
 \begin{figure}[H]
+	\begin{center}
+		\includegraphics[width=0.5\textwidth]{figures/SmoothingFactorPictureExplenation.png}		
+		\caption{Green circles are fluid particles, red - MC cells with full set of fluid particles in the neighborhood, yellow -  MC cells with half set of fluid particles in the neighborhood, orange - MC cells with quarter set of fluid particles in the neighborhood, blue - MC cells with no fluid particles in the neighborhood}
+		\label{fig:sf_example}
+	\end{center}
+\end{figure}
+
+\begin{figure}
 	\begin{center}
 		\begin{subfigure}[b]{0.7\textwidth}
 			\includegraphics[width=\textwidth]{figures/BlurSmoothingFactorOriginal.png}
@@ -99,16 +106,7 @@ The motivation to apply such a smoothing factor comes from the problem of the bl
 
 
 The idea of blurring using a smoothing factor is to blur the level set as much as possible in the areas where the surface of the fluid is flat and to apply less blur in areas, where a set of MC cells lacks fluid particles. Suppose the general case in Figure \ref{fig:sf_example}. In the figure red, yellow and orange grid vertices contain a full, half and quarter set of particles respectively. Level set values of the grid points are supposed to be blurred as much as possible near the flat fluid surface areas, but left unchanged in areas with small set of particles.
-\begin{figure}[H]
-	\begin{center}
-		\includegraphics[width=0.5\textwidth]{figures/SmoothingFactorPictureExplenation.png}		
-		\caption{Green circles are fluid particles, red - MC cells with full set of fluid particles in the neighborhood, yellow -  MC cells with half set of fluid particles in the neighborhood, orange - MC cells with quarter set of fluid particles in the neighborhood, blue - MC cells with no fluid particles in the neighborhood}
-		\label{fig:sf_example}
-	\end{center}
-\end{figure}
 Applying blur to the level set vertices that are inside the fluid (and all its neighbor cells are also inside the fluid) will not change the level set value too much as soon all vertices that has full set of fluid particles in the neighborhood will have similar level set values.\\
-For the MC vertices that are near the corners the 75\% of the neighbor vertices are outside the fluid. In this case blur iteration will bias the vertex outside the fluid, thus the fluid will shrink. This is also relevant for the thin areas and splashes.\\
-At the figure \ref{fig:blur_w_o_sf} the effect of surface shrinkage of applying blur in the thin area and in the corners w.r.t. the initial reconstruction method can be observed. The flat surface is smoothed out, but at the same time surface sharpness at the thin and splash areas is degraded, some small features/droplets are lost.
 \begin{figure}[H]
 	\begin{center}
 		\begin{subfigure}[b]{\textwidth}
@@ -125,8 +123,9 @@ At the figure \ref{fig:blur_w_o_sf} the effect of surface shrinkage of applying 
 	\caption{Comparison of original reconstruction method and blurred reconstruction without application of smoothing factor}
 	\label{fig:blur_thin_area}
 \end{figure}
-In the other hand applying blur on level set with smoothing factor smooths out the flat surface areas bumps, but preserves small feature areas (see Figure \ref{fig:blur_thin_area_with_sf}).
-\begin{figure}[H]
+For the MC vertices that are near the corners the 75\% of the neighbor vertices are outside the fluid. In this case blur iteration will bias the vertex outside the fluid, thus the fluid will shrink. This is also relevant for the thin areas and splashes.\\
+At the figure \ref{fig:blur_w_o_sf} the effect of surface shrinkage of applying blur in the thin area and in the corners w.r.t. the initial reconstruction method can be observed. The flat surface is smoothed out, but at the same time surface sharpness at the thin and splash areas is degraded, some small features/droplets are lost.
+\begin{figure}
         \begin{subfigure}[b]{0.5\textwidth}
 				\includegraphics[width=\textwidth]{figures/DenvityBasedSplashArea2.png}
 				\caption{Blurred Muller et. al.}
@@ -140,6 +139,7 @@ In the other hand applying blur on level set with smoothing factor smooths out t
        \caption{Comparison of original reconstruction method and blurred reconstruction with application of smoothing factor}
        \label{fig:blur_thin_area_with_sf}
  \end{figure}
+In the other hand applying blur on level set with smoothing factor smooths out the flat surface areas bumps, but preserves small feature areas (see Figure \ref{fig:blur_thin_area_with_sf}).
 \subsection{Blur kernel size and offset}
 The kernel size and kernel offset concept is widely used in a computer graphics blur algorithms. It is a commonly used effect in graphics software, typically to reduce image noise and resolve aliasing problems. The visual effect of this blurring technique is a smooth blur resembling that of viewing the image through a translucent screen.\\
 The most popular blur technique applied in computer graphics is a Gaussian blur. Mathematically, applying a Gaussian blur to an image is the same as convolving the image with a Gaussian function. This is also known as a two-dimensional Weierstrass transform.\\
@@ -340,7 +340,6 @@ The algorithm traverses along all neighbor MC grid vertices within kernel size a
 \begin{equation}
 	\dfrac{\partial \phi}{\partial x} = \dfrac{\phi_{i+1} - \phi_i}{x_{i+1} - x_i}
 \end{equation}
-After computation of the gradient it is normalized, while only the unit normal is required. There is a degenerate case, when computed gradient vanishes. To handle this case computation of neighbors is imply skipped, and original SDF value is applied. After all, the probability of occurrence of such an event is too small. Figure \ref{fig:nghbrs_computation} shows the example of neighbors displacement with kernel size 3 and kernel depth 0.5.
 \begin{figure}[H]
     \begin{subfigure}[b]{0.5\textwidth}
            \includegraphics[width=\textwidth]{figures/NeighborsComputation.png}
@@ -352,10 +351,11 @@ After computation of the gradient it is normalized, while only the unit normal i
     \caption{resulting neighbors computed for one of the MC grid vertices (white points are computed neighbors)}
     \label{fig:nghbrs_computation}
 \end{figure}
+After computation of the gradient it is normalized, while only the unit normal is required. There is a degenerate case, when computed gradient vanishes. To handle this case computation of neighbors is imply skipped, and original SDF value is applied. After all, the probability of occurrence of such an event is too small. Figure \ref{fig:nghbrs_computation} shows the example of neighbors displacement with kernel size 3 and kernel depth 0.5.
 
 \section{Blur Iterations}
 Apart to other parameters it was decided to check the influence of application of blur iteratively to the level set. In the Algorithm \ref{alg:blur_alg} blur applied iteratively on the level set. The results of the iterative blur can be observed on the Figure \ref{fig:bi_reconstruction}. The higher number of blur iterations the smother resulting surface becomes. 
-\begin{figure}[H]
+\begin{figure}
         \begin{subfigure}[b]{\textwidth}
                \includegraphics[width=\textwidth]{figures/ReconstructionIterations0.png}
 				\caption{0 blur iterations}
@@ -372,7 +372,7 @@ Apart to other parameters it was decided to check the influence of application o
 
 \end{figure}
 
-\begin{figure}[H]
+\begin{figure}
 
         \begin{subfigure}[b]{\textwidth}
                \includegraphics[width=\textwidth]{figures/ReconstructionIterations4.png}
@@ -635,7 +635,7 @@ Another scene comparison is shown in the figure \ref{fig:MotorScene1} and \ref{f
         \label{fig:MotorScene2}
 	\end{center}
 \end{figure}
-Figure \ref{fig:CrownScene1} \ref{fig:CrownScene2} and Table \ref{tab:CrownScene} shows the surface reconstruction comparison  and performance analysis for crown splash scene respectively. The blur filter was applied with kernel size: 1, kernel offset: 1, smoothing factor: 0.5. kernel depth: 0.5, blur iterations: 4.
+Figure \ref{fig:CrownScene1} \ref{fig:CrownScene2} analysisd Table \ref{tab:CrownScene} shows the surface reconstruction comparison  and performance analysis for crown splash scene respectively. The blur filter was applied with kernel size: 1, kernel offset: 1, smoothing factor: 0.5. kernel depth: 0.5, blur iterations: 4.
 \begin{figure}
 	\begin{center}
         \begin{subfigure}[b]{\textwidth}
