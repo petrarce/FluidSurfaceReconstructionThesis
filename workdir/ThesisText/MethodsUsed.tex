@@ -1,15 +1,16 @@
 \chapter{Research framework}
-All fluid surface reconstruction methods described in section \ref{sec:related-work} are using a level set technique for the construction of the fluid surface mesh. Given fluid particle displacement, density, and other SPH information these methods are computing scalar distance field (SDF) values for previously defined 3D grid domain. After computation of the SDF values, these methods apply the marching cubes algorithm to determine surface vertices.\\\
-Thus smoothing algorithms, proposed in this thesis are designed in the way that they can be applied to the reconstruction algorithms with the described infrastructure.
+All fluid surface reconstruction methods described in section \ref{sec:related-work} are based on signed scalar field techniques for surface extraction. Given fluid particle displacement, density, and other SPH information these methods are computing scalar signed field (sometimes reffered as signed distance field (SDF)) values for defined 3D grid vertices domain reffered as Marching cubes domain. After computation of the SDF values on the grid apply the marching cubes algorithm is applied to calculate surface mesh.\\\
+Smoothing algorithms, proposed in this thesis are designed in the way that they can be applied to the reconstruction algorithms with the described infrastructure.
 
 
-In this thesis the following methods were implemented for surface reconstruction:
+In this work the following methods were implemented for surface reconstruction:
 \begin{itemize}
   \item \emph{Muller et. al.} described in \cite{Muller}.
   \item \emph{Zhu-Bridson} method described in \cite{ZhuBridson}.
   \item \emph{Solenthaler} method first introduced in \cite{Solenthaler}.
   \item \emph{Onderik et. al.}, proposed in \cite{OnderikEtAl}.
 \end{itemize}
+All methods use surface extraction computing SDF and extracting the surface mesh using MC algorythm. The main difference is the way the SDF is defined (see section \ref{sec:related-work}).
 
 
 
@@ -27,10 +28,9 @@ The base class for all reconstruction methods is \emph{MarchingCubes} class. Thi
 The \emph{MarchingCubes} class has 4 virtual methods, which should be reimplemented inside each subclass:
 \begin{itemize}
 	\item \emph{computeSurfaceParticles()} - computes color field and detects SPH particles that are resided near the fluid surface.
-	\item \emph{configureHashTables()} - inside this method every concrete method performs initial configuration of hash tables, which are used to compute SDF.
-	\item \emph{updateGrid()} - computes the cells domain where calculation of SDF will be performed.
-	\item \emph{updateLevelSet()} - updates hash tables with data, required to compute level set values
-	\item \emph{getSDFvalue} - calculates resulting SDF value for a given MC cell vertex
+	\item \emph{configureHashTables()} - inside this method every concrete method performs initial configuration of hash tables, which are used to store SDF.
+	\item \emph{updateGrid()} - computes the MC greed domain where calculation of SDF will be performed.
+	\item \emph{updateLevelSet()} - calculates SDF values for each MC grid vertex. All smoothing algorithms described here are incorporated in this function and are applied on top of the SDF calculated by underlying method 
 \end{itemize}
 
 \emph{MarchingCubes} class re-implements interface method \emph{generateMesh()} composing previously defined functions (see Algorithm \ref{alg:generateMesh}).
@@ -50,14 +50,13 @@ The \emph{MarchingCubes} class has 4 virtual methods, which should be reimplemen
 \end{algorithm}
 
 \section{Adaptive hash tables for Marching Cubes grid}
-As described in \cite{Akinchi} the computation time for extracting smooth surfaces is mainly influenced by
-the resolution of the Marching Cubes grid and the smoothing radius R and achieving high-quality surfaces is possible at the expense of performance. One of the main causes of this issue is computing the scalar field over the volume of the fluid instead of concentrating on the surface area. Thus for performance and memory optimization reasons we decided to apply suggestions, proposed in \cite{Akinchi}.
+As presented in \cite{Akinchi} the computation time for extracting smooth surfaces is mainly influenced by the resolution of the Marching Cubes grid and the smoothing radius R. Achieving high-quality surfaces is possible at the expense of performance. One of the main causes of this issue is computing the scalar field over the volume of the fluid instead of concentrating on the surface area. Thus for performance and memory optimization reasons we decided to apply suggestions, proposed in \cite{Akinchi}.
 
-The first step is to determine the MC grid domain, on which all computation operations will be performed. To perform fluid surface reconstruction it is enough to compute SDF for MC grid cells that are near the fluid surface. To compute \emph{surface cells vertices} we have to:
+The first step is to determine the MC grid domain, on which all computation operations will be performed. To perform fluid surface reconstruction it is enough to compute SDF for MC grid cells that are near the fluid surface. To compute these cells next steps are applied:
 \begin{itemize}
-		\item Compute fluid particles, that are in the near neighborhood to the surface of the fluid. To determine surface particles in a preprocessing step, the smoothed color field method \cite{ColorField} is employed.  The smoothed color field value of a particle at position x is computed using Equation \ref{eq:ColorField}.
+		\item Compute SPH fluid particles, that are in the nearest neighborhood to the surface of the fluid. To determine surface particles in a preprocessing step, the smoothed color field method \cite{ColorField} is employed.  The smoothed color field value of a particle at position x is computed using Equation \ref{eq:ColorField}.
 		\item For each determined particle compute MC grid vertices, that are within the support radius R from each SPH particle, computed in previous step.
-		\item To avoid double layering problem, explained in the \cite{Akinchi} additional pass through all SPH particles is done. In this pass for each particle neighbor MC grid cells, that where in previous step identified, are queried. If there exists at least one MC grid cell that was identified as a near surface cell, the particle is accepted for further processing, otherwise it is discarded (only for a current frame of the surface reconstruction phase. Modifications is not propagated to the SPH simulation or other reconstruction frames).
+		\item To avoid double layering problem, explained in the \cite{Akinchi} additional pass through all SPH particles applied. In this pass for each SPH particle neighbor MC grid cells are queried. If there exists at least one MC grid cell that was identified as a near surface cell, the particle is accepted for further processing, otherwise it is discarded (only for a current frame of the surface reconstruction phase. Modifications are not propagated to the SPH simulation or other reconstruction frames).
 \end{itemize}
 
 \begin{equation} \label{eq:ColorField}
@@ -75,22 +74,22 @@ Detailed instructions sequence described in Algorithm \ref{alg:MC_grid_domain_co
 	\caption{Compute MC grid vertices and SPH particles that are going to be processed during computation of the SDF.}
 	\label{alg:MC_grid_domain_computation}
 	\begin{algorithmic}
-		\ForAll{ $i \in ParticleSet$}
-			\State Compute CF using Equation \ref{eq:ColorField}
-			\If{$CF \in ThresholdRange$}
-				\State $SurfaceParticleSet \gets SurfaceParticleSet \cup i$
+		\ForAll{ $particle \in ParticleSet$}
+			\State Compute ColorField using Equation \ref{eq:ColorField}
+			\If{$ColorField \in ThresholdRange$}
+				\State $SurfaceParticleSet \gets SurfaceParticleSet \cup particle$
 			\EndIf
 		\EndFor
 
-		\ForAll{$i \in SurfaceParticleSet$}
-			\State Compute $Neighbors_i$ of MC vertices within R from  i
+		\ForAll{$particle \in SurfaceParticleSet$}
+			\State Compute $Neighbors_i$ of MC vertices within R from  $particle$
 			\State $MCGridSurfaceCells \gets MCGridSurfaceCells \cup Neighbors_i$
 		\EndFor
 
-		\ForAll{$i \in ParticleSet$}
-			\State Compute $Neighbors_i$ from MCGridSurfaceCells within R from  i
+		\ForAll{$particle \in ParticleSet$}
+			\State Compute $Neighbors_i$ from MCGridSurfaceCells within R from  $particle$
 			\If{$Neighbors_i \neq \emptyset$}
-				\State $SurfaceParticleSet \gets SurfaceParticleSet \cup i$
+				\State $SurfaceParticleSet \gets SurfaceParticleSet \cup particle$
 			\EndIf
 		\EndFor
 
@@ -98,28 +97,4 @@ Detailed instructions sequence described in Algorithm \ref{alg:MC_grid_domain_co
 	\end{algorithmic}
 \end{algorithm}
 
-
-
-\section{Results}
-
-The results of the reconstruction using previously described methods on Figure \ref{fig:rec_methods}.
-\begin{figure}
-	\begin{subfigure}[b]{\textwidth}
-		\includegraphics[width=\textwidth]{figures/DencityBasedReconstruction.png}
-		\caption{Density-based reconstruction \cite{DencRec}}
-	\end{subfigure}
-	\begin{subfigure}[b]{\textwidth}
-		\includegraphics[width=\textwidth]{figures/ZhuBridsonReconstruction.png}
-		\caption{Zhu and Bridson reconstruction \cite{ZhuBridson}}
-
-	\end{subfigure}
-	\begin{subfigure}[b]{\textwidth}
-		\includegraphics[width=\textwidth]{figures/SolenthilerReconstruction.png}
-		\caption{Solenthaler reconstruction \cite{Solenthaler}}
-
-	\end{subfigure}
-	\caption{Reconstructed surfaces with methods, used in this thesis }
-	\label{fig:rec_methods}
-\end{figure}
-Each method has a different quality of the reconstructed surface due to the SDF computation approach. In this case, Zhu-Bridson and Solenthaler methods at it fundamental have a similar approach of computing SDF, but Additional to the SDF computed by Zhu \& Bridson`s method,  Solenthaler et.al. provides a distance decay function, which resolves the ghost surface artifacts inherent for Zhu-Bridson reconstruction method.
-
+As a result the framework is able to perform surface extraction on large scale with up to 13 million SPH particles (see sections \ref{sec:related-work}, \ref{sec:mls} and \ref{sec:blur})
