@@ -1,5 +1,5 @@
 \chapter{Related Work}\label{sec:related-work}
-There exists already a dozen of papers that provides a method of SPH fluid surface extraction. The most popular trend  both in research community and in production is to extract surfaces from computed SDF on top of the Marching Cubes algorithm. One of the first methods proposed by Blinn uses the electron density function to compute an SDF. E.g. in \cite{Blinn} a sample function for a  hydrogen atom is:
+There exists multiple of papers that provides a solution for SPH fluid surface extraction. The most popular trend  both in research community and in production is to extract surfaces from computed SDF on top of the Marching Cubes algorithm. One of the first methods proposed by Blinn uses the electron density function to compute an SDF. E.g. in \cite{Blinn} a sample function for a  hydrogen atom is:
 \begin{equation}
 	D(x) = e^{-a\cdot r(x)}
 \end{equation}
@@ -28,7 +28,7 @@ surface from the particles, $x_j$ is a position of particle $j$, $r_j$ is a part
 \begin{equation}
 	w_j = \dfrac{W(|x - x_j|/R)}{\sum_i{W(x - x_i)/R}}
 \end{equation}
-The method reconstructs relatively smooth surface. However, the small frequency bumps still can be seen on the surface. Also the method has a known artifact near the concave regions do to nonuniform decay of the the weighted sum of neighbor SPH particle positions.\\
+The method reconstructs relatively smooth surface. However, the small frequency bumps still can be seen on the surface. Also the method has a known artifact near the concave regions due to nonuniform decay of the the weighted sum of neighbor SPH particle positions.\\
 To solve the artifact introduced by Zhu \& Bridson method Solenthaler et. al. \cite{Solenthaler} proposed a solution using a distance decay function based on measuring the rate of change of the calculated center of  mass. The resulting SDF is calculated according to equation \ref{eq:solenthaler}
 \begin{equation}
 	\phi(x) = |x - \bar{x}| - Rf
