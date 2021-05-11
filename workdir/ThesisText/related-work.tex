@@ -193,7 +193,7 @@ with
 	d(x) = \sum_i W(|x - x_i|,h)\cdot d_i
 \end{equation}
 where $d_i$ is a approximate particle–to–surface distances. This re-distancing can be implemented by projecting particles near the surface onto the surface and propagating the distance information to the other particles in the interior of the fluid volume. The definition approximates flat surfaces as well as curve areas very well, however re-distancing requires additional computation effort w.r.t. to other methods.\\
-One of the most promising method, which produces smooth surfaces for flat and curve areas was proposed by Yu. and Turk. in the work \cite{YuTurk}. Their idea was to use anisotropic kernels instead of generally used isotropic used in \cite{Muller}. Anisotropic kernels are calculated as:
+One of the most promising methods, which produces smooth surfaces for flat and curve areas was proposed by Yu. and Turk. in the work \cite{YuTurk}. Their idea was to use anisotropic kernels instead of generally used isotropic used in \cite{Muller}. Anisotropic kernels are calculated as:
 \begin{equation}
 	W(|x_i - x_j|, G) = \tau \cdot  ||G|| \cdot P(||G \cdot (x_i - x_j)||)
 \end{equation}
@@ -212,10 +212,4 @@ where G is linear transformation G rotates and stretches the radial vector $x_i 
 	\caption{Comparison between different surface reconstruction approaches on the Double dam break animation \cite{YuTurk}.}
 	\label{fig:Adams_vs_YoTurk}
 \end{figure}
-Anisotrophic cernel method leads to the realistic visualization of fluid surfaces and that it outperforms existing methods for handling smooth and thin surfaces with sharp features. The simplicity and efficiency of our method facilitates the incorporation of our method with existing SPH simulation schemes with little additional effort.
-
-
-        
-        
-        
-
+The anisotropic kernel method leads to the realistic visualization of fluid surfaces and outperforms existing methods for handling smooth and thin surfaces with sharp features. The simplicity and efficiency of our method facilitate the incorporation of our method with existing SPH simulation schemes with little additional effort.

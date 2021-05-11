@@ -1,5 +1,5 @@
 \chapter{SDF blur filter} \label{sec:blur}
-During the reconstruction of the surface all methods in one form or another (depending on the level set computation approach) are using particle displacement information. In the SPH based fluid simulation frameworks are be formed during the surface reconstruction phase, which are usually treated as undesirable low-frequency noise. The comparison of the surface reconstruction based on a regular and irregular displacement of the particles are shown in the figure \ref{fig:rec_vs_displacement}.\\
+During the reconstruction of the surface, all methods in one form or another (depending on the level set computation approach) are using particle displacement information. In the SPH-based fluid simulation frameworks are be formed during the surface reconstruction phase, which is usually treated as undesirable low-frequency noise. The comparison of the surface reconstruction based on a regular and irregular displacement of the particles are shown in the figure \ref{fig:rec_vs_displacement}.\\
 The main goal of this thesis is to develop a method, which will smooth out a high frequency bumps on flat surface areas in the mean time preserving the surface features. Another important requirement that is persecuted int this work development a method, that will be computationally plausible.\\
 The first idea, that was applied to achieve stated requirements is simple blurring technique, which is extensively used in computer graphics e.g. as Gaussian Blur, Median blur, Bilateral blur or other image filtering techniques. In this chapter Blur-based method will be proposed. 
 \begin{figure}[h]
@@ -78,7 +78,7 @@ The smoothing factor formula was designed such that it should be maximal for MC 
 	\label{fig:sf_function_graph}
 \end{figure}
 
-The motivation to apply such a smoothing factor comes from the problem of the blurring algorithm. If  blur smoothing will be applied uniformly (without smoothing factor) on whole MC domain, the blur will smooth out the features in thin areas and the areas with a small set of particles (droplets or splashes). Figure \ref{fig:smoothing_factor_influence} shows the problem of application of the blur algorithm without smoothing factor.
+The motivation to apply such a smoothing factor comes from the problem of the blurring algorithm. If blur smoothing will be applied uniformly (without smoothing factor) on the whole MC domain, the blur will smooth out the features in thin areas and the areas with a small set of particles (droplets or splashes). Figure \ref{fig:smoothing_factor_influence} shows the problem of application of the blur algorithm without smoothing factor.
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.5\textwidth]{figures/SmoothingFactorPictureExplenation.png}		
@@ -108,7 +108,7 @@ The motivation to apply such a smoothing factor comes from the problem of the bl
 \end{figure}
 
 
-The idea of a smoothing factor is to blur the SDF as much as possible in the areas where the surface of the fluid is flat and to apply less blur in areas, where MC vertices lack fluid particles. In the flat surface areas it the set of fluid particles near surface is half (full set below the surface (inside fluid) and no particles above surface). Suppose the general case in figure \ref{fig:sf_example}. In the figure red, yellow and orange grid vertices contain a full, half and quarter set of particles respectively. SDF values of the grid points are supposed to be blurred as much as possible near the flat fluid surface areas, but left unchanged in areas with small set of particles.
+The idea of a smoothing factor is to blur the SDF as much as possible in the areas where the surface of the fluid is flat and to apply less blur in areas, where MC vertices lack fluid particles. In the flat surface areas, the set of fluid particles near-surface is half (full set below the surface (inside fluid) and no particles above surface). Suppose the general case in figure \ref{fig:sf_example}. In the figure red, yellow, and orange grid vertices contain a full, half, and quarter set of particles respectively. SDF values of the grid points are supposed to be blurred as much as possible near the flat fluid surface areas but left unchanged in areas with a small set of particles.
 Applying blur to the SDF vertices that are inside the fluid is not changing drastically the original SDF value as soon all vertices that has full set of fluid particles in the neighborhood will have similar SDF values.\\
 \begin{figure}[H]
 	\begin{center}
@@ -142,12 +142,12 @@ In the figure \ref{fig:blur_w_o_sf} the effect of surface shrinkage after applyi
        \caption{Comparison of original reconstruction method and blurred reconstruction with application of smoothing factor}
        \label{fig:blur_thin_area_with_sf}
  \end{figure}
-In the other hand applying blur on level set with smoothing factor smooths out the flat surface areas but in the meantime preserves sharp feature (see figure \ref{fig:blur_thin_area_with_sf}). The $bsf$ (user defined parameter) can be interpreted as a scaling factor for a number of particles in the neighborhood of SDF vertex. For example if $bsf=2$ then all SDF vertices with more than half set of particles receive maximal smoothing factor value. In this theses $bsf=2$ is used as a default.
+On the other hand, applying blur on level set with smoothing factor smooths out the flat surface areas but in the meantime preserves sharp feature (see figure \ref{fig:blur_thin_area_with_sf}). The $bsf$ (user-defined parameter) can be interpreted as a scaling factor for a count of particles in the neighborhood of the SDF vertex. For example, if $bsf=2$ then all SDF vertices with more than half a set of particles receive maximal smoothing factor value. In this theses, $bsf=2$ is used as a default.
 \subsection{Blur kernel size and offset}
-The kernel size and kernel offset concept is widely used in a computer graphics blur algorithms. It is a commonly used effect in graphics software, typically to reduce image noise and resolve aliasing problems. The visual effect of this blurring technique is a smooth blur resembling that of viewing the image through a translucent screen.\\
+The kernel size and kernel offset concept is widely used in computer graphics blur algorithms. It is a commonly used effect in graphics software, typically to reduce image noise and resolve aliasing problems. The visual effect of this blurring technique is a smooth blur resembling that of viewing the image through a translucent screen.\\
 The most popular blur technique applied in computer graphics is a Gaussian blur. Mathematically, applying a Gaussian blur to an image is the same as convolving the image with a Gaussian function. This is also known as a two-dimensional Weierstrass transform.\\
 Each pixel in the image gets multiplied by the Gaussian kernel. This is done by placing the center pixel of the kernel on the image pixel and multiplying the values in the original image with the pixels in the kernel that overlap. The values resulting from these multiplications are added up and that result is used for the value at the destination pixel.\\
-The kernel could be of an arbitrary size, e.g. uniform box kernel with kernel size 1:\\
+The kernel could be of arbitrary size, e.g. uniform box kernel with kernel size 1:\\
 $\begin{pmatrix}
 1 & 1 & 1\\
 1 & 1 & 1\\
@@ -159,8 +159,8 @@ $\begin{pmatrix}
 1 & 1 & 1 & 1 & 1\\
 1 & 1 & 1 & 1 & 1\\
 1 & 1 & 1 & 1 & 1
-\end{pmatrix}$\\ This could be easely extended to a 3D case, which used in this work.\\
-The kernel offset, can be expressed as a smallest amount of steps over the neighborhood that should be performed to reach next sample, which will be used in blurring procedure. E.g. next matrix describes a kernel with kernel size 1 and kernel offset 2: \\
+\end{pmatrix}$\\ This could be easily extended to a 3D case, which is used in this work.\\
+The kernel offset can be expressed as the smallest amount of steps over the neighborhood that should be performed to reach the next sample, which will be used in the blurring procedure. E.g. next matrix describes a kernel with kernel size 1 and kernel offset 2: \\
 $
 \begin{pmatrix}
 	1 & 0 & 1 & 0 & 1\\
@@ -170,7 +170,7 @@ $
 	1 & 0 & 1 & 0 & 1
 \end{pmatrix}
 $.\\
-Both parameter influences a quality of a surface reconstruction. However, kernel size also defines the runtime complexity of the algorithm, as soon as kernel performance of the blur stage over the SDF depends cubically on the kernel size. The total complexity of the blur stage can be expressed as $O(n\cdot k^3)$, where n is a number of MC grid vertices $k$ is a kernel size. On the other hand kernel offset doesn't influences the performance of the SDF blurring stage, as soon as according to the Algorithm \ref{alg:blur_nbs_search} it doesn't influence the number of samples that will be picked for blurring.\\
+Both parameters influence the quality of surface reconstruction. However, kernel size also defines the runtime complexity of the algorithm, as soon as kernel performance of the blur stage over the SDF depends cubically on the kernel size. The total complexity of the blur stage can be expressed as $O(n\cdot k^3)$, where n is a number of MC grid vertices and $k$ is a kernel size. On the other hand, kernel offset doesn't influence the performance of the SDF blurring stage, as soon as according to the Algorithm \ref{alg:blur_nbs_search} it doesn't influence the number of samples that will be picked for blurring.\\
 However, expansion of the kernel size/offset has its limitation on the surface quality, e.g. inappropriately large kernel offset can smooth out a sharp features or even bring artifacts to the reconstructed surface. Figure \ref{fig:ksko} shows resulting surface with different valuations of kernel size and kernel offset.\\
 \begin{figure}
         \begin{subfigure}[b]{0.5\textwidth}
@@ -241,9 +241,9 @@ However, expansion of the kernel size/offset has its limitation on the surface q
         \label{fig:ksko2}
 \end{figure}
 
-If kernel size or a kernel offset is taken too large, the SDF values of MC vertices near to the bounds of the grid will be biased forming holes and artifacts on the surface (see Figures \ref{fig:ks4ko1} and \ref{fig:ks1ko4}). In general applying blur to the SDF tends to shrink the surface in the thin areas due imbalance of outer and inner MC vertices within fluid. The larger kernel size/offset the more shrinkage can be seen on the reconstructed surface (see Figures \ref{fig:ks4ko12} and \ref{fig:ks1ko12}).
+If kernel size or a kernel offset is taken too large, the SDF values of MC vertices near to the bounds of the grid will be biased forming holes and artifacts on the surface (see Figures \ref{fig:ks4ko1} and \ref{fig:ks1ko4}). In general applying blur to the SDF tends to shrink the surface in the thin areas due to an imbalance of outer and inner MC vertices within a fluid. The larger kernel size/offset the more shrinkage can be seen on the reconstructed surface (see Figures \ref{fig:ks4ko12} and \ref{fig:ks1ko12}).
 \subsection{Kernel depth}
-The advantage of the static MC grid is that it has a static displacement of all grid vertices. This fact is exploited during for efficient computation SDF vertices neighborhood. However, using the full neighborhood within the $kernelSize$ and $kernelOffset$ is not sufficient for SDF blurring. As soon as smoothing aims to remove bumps in the flat surface areas it is more practical to take into account level set vertices, that are in the neighborhood of the fluid surface. Thus, for each vertex of the level set gradient of the level set can be computed.
+The advantage of the static MC grid is that it has a static displacement of all grid vertices. This fact is exploited for efficient computation of SDF vertices neighborhood. However, using the full neighborhood within the $kernelSize$ and $kernelOffset$ is not sufficient for SDF blurring. As soon as smoothing aims to remove bumps in the flat surface areas it is more practical to take into account level set vertices, that are in the neighborhood of the fluid surface. Thus, for each vertex of the level set gradient of the level set can be computed.
 The gradient of the implicit function for the SDF is defined as
 \begin{equation}
 	\nabla\phi = \left( \dfrac{\partial\phi}{\partial x}, \dfrac{\partial\phi}{\partial y}, \dfrac{\partial\phi}{\partial z}\right)
@@ -255,7 +255,7 @@ of $\phi$, i.e., a point on the fluid surface, then $\nabla\phi$ evaluated at $x
 	N = \dfrac{\nabla\phi}{|\nabla \phi|}
 \end{equation}
 
-For flat surface areas it is meaningful to blur SDF vertex values w.r.t. vertices, which resides in a tangential direction to the surface normal.
+For flat surface areas, it is meaningful to blur SDF vertex values w.r.t. vertices, which reside in a tangential direction to the surface normal.
 
 \begin{figure}[H]
         \begin{subfigure}[b]{0.5\textwidth}
@@ -283,7 +283,7 @@ For flat surface areas it is meaningful to blur SDF vertex values w.r.t. vertice
        \label{fig:kd_surface_explenation}
  \end{figure}
 At the Figure \ref{fig:expected_fs} expected iso-surface in flat fluid area is displayed. Dots of different colors are the MC grid vertices. Colors represent the SDF value. In the perfect case level set ISO-lines (in the 2D example) forms straight lines, thus MC grid vertices along the iso-line will receive similar SDF evaluations. However, due to the irregular displacement of fluid particles surface is usually reconstructed as shown in Figure \ref{fig:recon_fs}. In case if we apply full kernel size (see Figure \ref{fig:full_ks}) we will pick level set values from different iso-surface levels, which will change level set values unpredictably.\\
-The better approach is to pick a kernel frame so that only level set values of near-surface MC vertices will be used for blur operation (Figure \ref{fig:partial_ks}). This way blur operation will smooth out grid vertices along the iso lines. Especially the influence of the kernel depth can be seen in thin areas, where kernel frame is larger than a thickness of a fluid surface. Some examples of reconstruction with kernel depth can be seen in the figure \ref{fig:kd_influence example}. The kernel depth parameter is a scalar value that is defined in the domain $[0, 1]$, which can be interpreted as a fraction of shrinkage of a kernel in a direction normal to the fluid surface. The default kernel depth value used in this thesis is $0.5$.
+The better approach is to pick a kernel frame so that only level set values of near-surface MC vertices will be used for blur operation (Figure \ref{fig:partial_ks}). This way blur operation will smooth out grid vertices along the isolines. Especially the influence of the kernel depth can be seen in thin areas, where the kernel frame is larger than a thickness of a fluid surface. Some examples of reconstruction with kernel depth can be seen in the figure \ref{fig:kd_influence example}. The kernel depth parameter is a scalar value that is defined in the domain $[0, 1]$, which can be interpreted as a fraction of shrinkage of a kernel in a direction normal to the fluid surface. The default kernel depth value used in this thesis is $0.5$.
 \begin{figure}
         \begin{subfigure}[b]{0.9\textwidth}
                \includegraphics[width=\textwidth]{figures/KernelDepthOriginalReconstruction.png}
@@ -305,7 +305,7 @@ The better approach is to pick a kernel frame so that only level set values of n
        \label{fig:kd_influence example}
  \end{figure}
  \subsection{Neighbors detection algorithm}
-Computation of neighbors for each SDF vertex is a core building block for blur filtering algorithm. It uses all previously defined concepts: kernel size, kernel offset, kernel depth. The basic idea of neighbors detection is given a kernel size and offset traverse over all grid neighbors of reference vertex. In case of statically defined grid with fixed resolution, coordinates of grid neighbors can be computed trivially. Only this vertices are picked which are within acceptable distance in the  normal direction to the surface from a reference vertex.
+Computation of neighbors for each SDF vertex is a core building block for blur filtering algorithm. It uses all previously defined concepts: kernel size, kernel offset, kernel depth. The basic idea of neighbors detection is given a kernel size and offset traverse overall grid neighbors of reference vertex. In the case of a statically defined grid with a fixed resolution, coordinates of grid neighbors can be computed trivially. Only these vertices are picked which are within acceptable distance in the normal direction to the surface from a reference vertex.
 In the Algorithm \ref{alg:blur_level_set} MC neighbor vertices are computed in function $getNeighbourVertices(vtx)$. The Algorithm \ref{alg:blur_nbs_search} describes the $getNeighbourVertices$ procedure of neighbors detection:
 \begin{algorithm}[H]
 	\scriptsize
@@ -353,10 +353,10 @@ where $\tau$ is some small threshold and $GridResolution$ is a resolution of a M
     \caption{resulting neighbors computed for one of the MC grid vertices (white points are computed neighbors)}
     \label{fig:nghbrs_computation}
 \end{figure}
-After computation of the gradient it is normalized, while only the unit normal is required. There is a degenerate case, when computed gradient vanishes. To handle this case computation of neighbors is simply skipped, and original SDF value is applied. After all, the probability of occurrence of such an event is disparagingly small. Figure \ref{fig:nghbrs_computation} shows the example of neighbors displacement with kernel size 3 and kernel depth 0.5.
+After computation of the gradient, it is normalized, while only the unit normal is required. There is a degenerate case when computed gradient vanishes. To handle this case computation of neighbors is simply skipped, and the original SDF value is applied. After all, the probability of occurrence of such an event is disparagingly small. Figure \ref{fig:nghbrs_computation} shows the example of neighbors displacement with kernel size 3 and kernel depth 0.5.
 
 \section{Blur Iterations}
-Apart to other parameters it was decided to check the influence of application of blur iteratively to the level set. In the Algorithm \ref{alg:blur_alg} blur applied iteratively on the level set. The results of the iterative blur can be observed on the Figure \ref{fig:bi_reconstruction1} and \ref{fig:bi_reconstruction2}. The higher number of blur iterations the smother resulting surface becomes. 
+Blur smoothing filter can be applied iteratively. Moreover, as it will be shown further, it is advantageous in terms of performance and surface smoothing to apply multiple iterations of filter on SDF. In the Algorithm \ref{alg:blur_alg} blur applied iteratively on the level set. The results of the iterative blur can be observed on the figure \ref{fig:bi_reconstruction1} and \ref{fig:bi_reconstruction2}. The higher number of blur iterations the smother the resulting surface becomes. 
 \begin{figure}
         \begin{subfigure}[b]{\textwidth}
                \includegraphics[width=\textwidth]{figures/ReconstructionIterations0.png}
@@ -406,50 +406,33 @@ However, large amount of iterations smooths out level set to uniform value, thus
        \label{fig:bi_levelset}
 \end{figure}
 
-An important property of the blur reconstruction algorithm should be noted. Lets analyze the blur algorithm, applied on the level set (for simplicity 2D version will be analyzed).\\
-Suppose matrix $A = 
+An important property of the blur reconstruction algorithm should be noted.\\
+Suppose matrix \\
+$A = 
 \begin{pmatrix}
 	1 & 1 & ... & 1\\
 	1 & 1 & ... & 1\\
 	. & . & ... & .\\
 	1 & 1 & ... & 1\\
-\end{pmatrix}$ is a $n \times n$ kernel where n is odd.
-Kernel multiplication operation on level set element is described in equation \ref{eq:kernel-operation}
+\end{pmatrix}$\\
+is a $n \times n$ kernel where n is odd since in this work for all kernels $n = kernelSize \cdot 2 + 1$.
+Kernel convolution operation on SDF vertex is described in equation \ref{eq:kernel-operation}
 \begin{equation}
-	\dfrac{1}{n^2}\cdot A\cdot sdf_{ij} = \sum_{k=- \left \lfloor{n/2}\right \rfloor}^{\left \lfloor{n/2}\right \rfloor}
-		{\sum_{l=- \left \lfloor{n/2}\right \rfloor}^{\left \lfloor{n/2}\right \rfloor}{ A_{k+1, l+1} \cdot sdf_{i+k, j+l}}}
+	\dfrac{1}{n^2}\cdot A\cdot sdf_{ij} = \sum_{m=- \left \lfloor{n/2}\right \rfloor}^{\left \lfloor{n/2}\right \rfloor}
+		{\sum_{l=- \left \lfloor{n/2}\right \rfloor}^{\left \lfloor{n/2}\right \rfloor}{ A_{m+1, l+1} \cdot sdf_{i+m, j+l}}}
 	\label{eq:kernel-operation}
 \end{equation}
-Suppose $n=3$ and $ sdf^{(k)}_{i,j} = \dfrac{1}{9} \cdot A \cdot sdf^{(k-1)}_{i,j} = \dfrac{1}{9^k} \cdot A^{(k)} \cdot sdf^{(0)}_{i,j}$\\. The claim is that $\dfrac{A^{(k)}}{9^k}$ satisfies properties of a kernel function:
-\begin{itemize}
-	\item positivity condition : $\forall a_{ij} \in A^(k): a_{ij} >= 0$
-	\item normalization condition: $\forall a_{ij} \in A^(k), i,j \in [n]: \dfrac{\sum{a_{ij}}}{9^k} = 1$
-	\item symmetry condition: $\forall i,j k=\left \lfloor{\dfrac{n}{2}}\right \rfloor $
-\end{itemize}
-Thus, when applied to the MC vertices plays a role of weights of the level set values in the neighborhood of the central vertice.\\
-Proof of positivity condition:\\
-As soon as each element of $A^{(k)}$ is formed by summing up neighboring elements of $A^{(k-1)}$ that is $a_{ij}^{(k)} = \sum_{k=-1}^{1}{\sum_{l=-1}^{1}{a^{(k-1)}_{i+k, j+l}}}$, then by simple induction starting with initial kernel $A^(1)=
-\begin{pmatrix}
-1 & 1 & 1\\
-1 & 1 & 1\\
-1 & 1 & 1\\
-\end{pmatrix}$
-it can be proven, that $a_{ij}^{(k)} >= a_{ij}^{(k-1)} >= a_{ij}^{(1)}$.\\
-Proof of normalization condition: \\
-Base step:\\ 
-For initial matrix $A^{(1)}$ it is obvious that $\dfrac{\sum_{i,j = 1}^{n}{a_{ij}}}{9} = 1$.\\
-Induction step: \\
-Let $\dfrac{A^{(k)}}{9^k} = 1$. Taking into account, that $a_{ij}^{(k+1)} = \sum_{k=-1}^{1}{\sum_{l=-1}^{1}{a^{(k)}_{i+k, j+l}}}$ then $\forall a_{ij} \in A^{(k)}$ will appear in the sum of elements of $A^{(k+1)}$ exactly 9 times. Thus $\sum_{i,j}{a_{ij}^{(k+1)}} = 9 \cdot \sum_{i,j}{a_{ij}^{(k)}} = 9^{k+1}$\\
-Some examples of a kernel functions iteratively formed from uniform kernel with kernel size = 1:\\
-$A^2 = 
+Suppose $n=3$, then $ sdf^{(k)}_{i,j} = \dfrac{1}{9} \cdot A \cdot sdf^{(k-1)}_{i,j} = \dfrac{1}{9^k} \cdot A^{(k)} \cdot sdf^{(0)}_{i,j}$, where $sdf^{(k)}$ is a SDF value obtained on k-th iteration of blur and $A^{(k)}$ is a kernel obtained after k iterations.\\
+For more intuition on how $A^{(k)}$ evolves during iterations here are some examples of a kernel functions iteratively formed from uniform kernel with kernel size = 1:\\
+$A^1 = 
 \begin{pmatrix}
 1 & 2 & 3 & 2 & 1\\
 2 & 4 & 6 & 4 & 2\\
 3 & 6 & 9 & 6 & 3\\
 2 & 4 & 6 & 4 & 2\\
 1 & 2 & 3 & 2 & 1\\
-\end{pmatrix}$
-$A^3 = 
+\end{pmatrix}$\\
+$A^2 = 
 \begin{pmatrix}
  1 & 3 & 6 & 7 & 6 & 3 & 1\\
  3 & 9 & 18 & 21 & 18 & 9 & 3\\
@@ -459,7 +442,7 @@ $A^3 =
  3 & 9 & 18 & 21 & 18 & 9 & 3\\
  1 & 3 & 6 & 7 & 6 & 3 & 1\\
 \end{pmatrix}$\\
-$A^4 = 
+$A^3 = 
 \begin{pmatrix}
 1 & 4 & 10 & 16 & 19 & 16 & 10 & 4 & 1\\
 4 & 16 & 40 & 64 & 76 & 64 & 40 & 16 & 4\\
@@ -471,25 +454,48 @@ $A^4 =
 4 & 16 & 40 & 64 & 76 & 64 & 40 & 16 & 4\\
 1 & 4 & 10 & 16 & 19 & 16 & 10 & 4 & 1\\
 \end{pmatrix}$\\
-This means, that given a kernel size = 1, kernel offset = 0 and blur iterations = n the final blur kernel applied will have a form of $ n \times n$ kernel that satisfies the kernel function conditions (proof for 3D case is similar for 2D case). Also the cost of the blur stage is reduced from $O(p \cdot n^2)$ when using $n \times n$ kernel to $O(9 \cdot p \cdot n)$ when using $3\times 3$ kernel applied n times on p MC grid cells. However, in  case of iterative approach kernel converges to Gaussian, in the latter case uniform kernel is applied. 
+Figure \ref{fig:iterativeKernelExpansion} explains expansion of a kernel during iterative blur.
+\begin{figure}
+	\begin{center}
+   		\includegraphics[width=0.5\textwidth]{figures/IterativeKernelCalculationExample.png}
+	\end{center}
+	\caption{2D slice of SDF grid. Green squares defines kernel bounds on the grid during the first iteration. Red square shows the kernel during the second iteration (central vertex only). At the end of kernel convolution the SDF of a central vertex will inherit SDF values of all vertices, that are in the neighborhood of green kernels from first iteration.}
+   \label{fig:iterativeKernelExpansion}
+\end{figure}
+
+When blur is applied iteratively the result of the kernel convolution from the previous iteration is merged, thus the resulting blur contains fractions of SDF values taken from samples, that are actually within the kernel of a  reference vertex.\\
+
+The claim is that $\dfrac{A^{(k)}}{9^k}$ satisfies properties of a kernel function:
+\begin{itemize}
+	\item positivity condition : $\forall a_{ij} \in A^{(k)}: a_{ij} >= 0$
+	\item normalization condition: $\forall a_{ij} \in A^{(k)}, i,j \in [n]: \dfrac{\sum{a_{ij}}}{9^k} = 1$
+	\item symmetry condition: $\forall i,j A^{(k)}_{i,j} = A^{(k)}_{j, i} $
+\end{itemize}
+Thus, when convolved with SDF vertices, $A^{(k)}$ plays a role of weights of the level set values for the neighborhood of the central vertex of a kernel.\\
+Proofs of the claims will be performed on a 2D kernel, but these proofs also apply to the 3D case.
+Proof of positivity condition:\\
+Elements of $A^{(k)}$ can be interpreted as accumulation counter of $a_{i,j} \in A^{(k)}$ after merge of neighbor kernels form first $k-1$st iteration, thus $\forall a_{i,j} \in A^{(k)}: a_{i,j} >= 0$.\\
+Proof of normalization condition: \\
+Base step: \\
+For initial matrix $A^{(0)}$ it is obvious that $\dfrac{\sum_{i,j = 1}^{n}{a_{ij}}}{9} = 1$.\\
+Induction step:\\ 
+Suppose for all vertices with coordinates $m,l$ in SDF grid $A^{(k)}_{m,l}$ is such that $\dfrac{sum(A^{(k)}_{m,l})}{9^k} = 1$ where $sum(A^{(k)}_{m,l})$ for simplicity is a sum over all elements of $k$-th kernel. The kernel $A^{(k)}_{m,l}$ will be generated by merging kernels of SDF grid neighbor for vertex ${m,l}$. A a result $sum(A^{(k+1)}_{m,l}) = \sum_{i,j}{sum(A^{(k)}_{m+i,l+j}})$. Taking into account induction step statement $\dfrac{sum(A^{(k+1)}_{m,l})}{9^{k+1}} = \dfrac{\sum_{i,j}{sum(A^{(k)}_{m+i,l+j}})}{9^{k+1}} = \dfrac{\sum_{i,j}{\dfrac{sum(A^{(k)}_{m+i,l+j})}{9^k}}}{9} = \dfrac{\sum_{i,j}{1}}{9}$. As far as $i,j\in [3]$ then $\sum_{i=1}^3 {\sum_{j=1}^3 {1}} = 9$ and as a result $\dfrac{sum(A^{(k+1)}_{m,l})}{9^{k+1}} = 1$. The statement is proven.\\
+Proof of symmetric condition:
+As soon as the initial kernel is symmetric and the kernel is quadratic merging kernels will produce another symmetric kernel.\\
+
+This means, that given a kernel size = 1, kernel offset = 0 and blur iterations = n the final blur kernel applied will have a form of $ n \times n$ kernel that satisfies the kernel function conditions (proof for the 3D case is similar as for 2D case). Also, the cost of the blur stage is reduced from $O(p \cdot n^2)$ when using $n \times n$ kernel to $O(9 \cdot p \cdot n)$ when using $3\times 3$ kernel applied n times on p MC grid cells. However, in the case of the iterative approach kernel converges to Gaussian.
 
 
 \section{Results and Performance comparison}
-In this section performance of the blur algorithm will be analyzed w.r.t. the original reconstruction methods. All tests was performed on one core of AMD Ryzen 5. No parallelization was applied to simplify the analysis. The analysis was performed for each stage of the algorithm described in \ref{alg:generateMesh} 
+In this section performance of the blur algorithm will be analyzed w.r.t. the original reconstruction methods. All tests was performed on one core of AMD Ryzen 5. No parallelization was applied to simplify the analysis. The analysis was performed for each stage of the algorithm described in algorithm \ref{alg:generateMesh}.\\ 
 Table \ref{tab:perf_analysis} shows the wall-clock time for each method in different stages.
-Reconstruction was performed on the simulation with 40000 particles, 93 frames and 0.02 particle radius, where:
-\begin{conditions}
-	DB & Density based Muller et.al. reconstruction (MC grid resolution: 0.020000)\\
-	DBblur & Density based reconstruction Muller et.al. with level set blur (Kernel size: 2, Kernel offset: 1, Kernel depth: 0.5, Blur iterations: 1)\\
-	ZB & Zhu and Bridson reconstruction (MC grid resolution: 0.020000, Support radius: 0.08\\
-	ZBblur & Zhu and Bridson with level set blur (Smoothing factor: 1, Kernel size: 2, Kernel offset: 1, Kernel depth: 0.5, Blur iterations: 1)\\
-\end{conditions}
+Reconstruction was performed on the simulation with 40000 particles, 93 frames and 0.02 particle radius.
 \begin{table}[h]
 	\begin{center}
 		\scriptsize
 		\begin{tabular}{|l|c|c|c|c|c|c|}
 			\hline
-			Simulation type & Muller et. al. & Blurred Muller et. al. & Zhu\&Bridson & ZBblur \\
+			Simulation type & Muller et. al. & Blurred Muller et. al. & Zhu\&Bridson & Z\&B Blurred \\
 			\hline
 			Total execution time		&	250.210204	&	362.309801	&	227.907790	&	339.686174	\\
 			Hash tables update			&	1.292020	&	1.491784	&	1.846468	&	2.009707	\\
@@ -533,9 +539,9 @@ In Table \ref{tab:ks_perf_analysis} performance of the application is analyzed d
 	\caption{Blurring method performance depending on kernel size}
 	\label{tab:ks_perf_analysis}
 \end{table}
-From Table \ref{tab:ks_perf_analysis} it can be seen, that the runtime of the level set reconstruction rises in a factor of kernel size.\\
+From Table \ref{tab:ks_perf_analysis} it can be seen, that the runtime of the level set reconstruction more nonlinearly which corresponds to the described algorithm.\\
 
-In Table \ref{tab:bi_perf_analysis} reconstruction runtime is given for the blur reconstruction depending on the blur iterations. 
+In Table \ref{tab:bi_perf_analysis} analysis is performed for the blur reconstruction depending on the blur iterations. 
 \begin{table}[H]
 	\begin{center}
 		\scriptsize
@@ -555,7 +561,7 @@ In Table \ref{tab:bi_perf_analysis} reconstruction runtime is given for the blur
 	\caption{Blur filter performance depending on blur iterations}
 	\label{tab:bi_perf_analysis}
 \end{table}
-Runtime of the reconstruction depends linearly on the number of blur iterations.\\
+The runtime of the reconstruction depends linearly on the number of blur iterations.\\
 
 Table \ref{tab:kd_perf_analysis} shows the performance of the application depending on the kernel depth value. Here kernel size is fixed to 5.
 \begin{table}[H]
@@ -577,7 +583,7 @@ Table \ref{tab:kd_perf_analysis} shows the performance of the application depend
 	\caption{Blur filter performance depending on kernel depth}
 	\label{tab:kd_perf_analysis}
 \end{table}
-
+Algorithm performance scales linearly depending on kernel depth.\\
 Figure \ref{fig:DamBreak} and \ref{fig:DamBreak2} displays the  the comparison of reconstruction results between original and SDF blurred surface in Dam break scenario.
 \begin{figure}
 	\begin{center}
@@ -601,7 +607,7 @@ Figure \ref{fig:DamBreak} and \ref{fig:DamBreak2} displays the  the comparison o
         \end{subfigure}
         \begin{subfigure}[b]{\textwidth}
                \includegraphics[width=\textwidth]{figures/ReconstructionZhuBridsonBlur.png}
-				\caption{ZBBlur}
+				\caption{Z\&B Blurred}
         \end{subfigure}
 	\end{center}
 	\caption{Fluid surface comparison in dam break scene (40000 SPH particles)}
@@ -631,7 +637,7 @@ Another scene comparison is shown in the figure \ref{fig:MotorScene1} and \ref{f
         \end{subfigure}
        \begin{subfigure}[b]{1\textwidth}
                \includegraphics[width=\textwidth]{figures/ReconstructionMotorSceneZhuBridsonBlur.png}
-				\caption{Method: ZBblur}
+				\caption{Method: Z\&B Blurred}
         \end{subfigure}
         \caption{Motor scene fluid surface reconstruction comparison (5000 SPH particles)}
         \label{fig:MotorScene2}
@@ -690,9 +696,9 @@ Figure \ref{fig:CrownScene1} \ref{fig:CrownScene2} analysisd Table \ref{tab:Crow
 
 
 \section{Conclusions}
-After performing previously described experimentations with the developed method the conclusion can be made, that application of blur to the level set is definitely influences the final surface quality, and this method is able to smooth flat areas of surface, in the mean time saving small features in splash areas. The developed algorithm is applied on top of the original reconstruction algorithm. It can be applied to every reconstruction method, which uses scalar distance field to construct iso-surfaces and reconstruct the surface itself.\\ 
+After performing previously described experimentations with the developed method the conclusion can be made, that application of blur to the level set influences the final surface quality, and this method is able to smooth flat areas of the surface, in the meantime saving small features in splash areas. The developed algorithm is applied on top of the original reconstruction algorithm. It can be applied to every reconstruction method, which uses a scalar distance field to construct iso-surfaces and reconstruct the surface itself.\\ 
 In the future efforts can be applied to improve algorithm performance, e.g. porting blur stage on GPU. The blur stage of the algorithm.\\
-However, this method still has severe drawback - a problem of parametrization. There are multiple parameters that should be tunned, such as kernel size, kernel offset, kernel depth, smoothing factor, blur iterations. For different reconstruction methods, depending on the structure of the level set, simulation scale, performance and surface quality requirements, there is no golden middle for automatic application of the parametrization. Thus manual parameters tuning is required to achieve required reconstruction quality.\\
-Two approach can be used to define a parametrization - fix kernel size = 1, kernel offset = 0, kernel depth = 1 and modify number of blur iterations and smoothing factor. In this case performance will be improved, but blur will not be flexible to the near surface areas, thus sharp features could be smoothed too much.\\
-Another approach is to modify kernel size, kernel depth and smoothing factor, while keeping blur iterations fixed to 1. In this case most reconstruction method is more flexible to blurring low frequency bumps in flat surface areas saving most of the sharp features, meanwhile the performance of the reconstruction will be degraded.
+However, this method still has a severe drawback - a problem of parametrization. Multiple parameters should be tuned, such as kernel size, kernel offset, kernel depth, smoothing factor, blur iterations. For different reconstruction methods, depending on the structure of the level set, simulation scale, performance, and surface quality requirements, there is no golden middle for automatic application of the parametrization. Thus manual parameters tuning is required to achieve the required reconstruction quality.\\
+Two approaches can be used to define a parametrization - fix kernel size = 1, kernel offset = 0, kernel depth = 1, and modify a number of blur iterations and smoothing factor. In this case, performance will be improved, but blur will not be flexible to the near-surface areas, thus sharp features could be smoothed too much.\\
+Another approach is to modify kernel size, kernel depth, and smoothing factor while keeping blur iterations fixed to 1. In this case, most reconstruction method is more flexible to blurring low-frequency bumps in flat surface areas saving most of the sharp features, meanwhile, the performance of the reconstruction will be degraded.
 
