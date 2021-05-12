@@ -1,10 +1,14 @@
 \chapter{Moving least squares level set smoothing} \label{sec:mls}
 \section{Introduction and motivation}
-As were previously concluded blur level set method requires a high effort to configure all available parameters to match the required fluid surface reconstruction quality.\\
+As were previously concluded blur level set method requires a high effort to configure all available parameters to match the required fluid surface reconstruction quality.
+
 A lot of work was already done in the field of Surface reconstruction from point clouds. 
-The central objective is obtaining a digital representation of real-world objects, where the basic problem is to capture a 3D point cloud that samples the real world and reconstruct as much information as possible concerning the scanned objects. There exists a large number of approaches, that reconstruct surfaces from the point cloud. different algorithms make an assumption regarding the quality of the point cloud (density, noise, outliers...) on which the algorithm is supposed to perform robustly.\\
-Points that are randomly distributed near the surface are traditionally considered to be noise. The specific distribution is commonly a function of scanning artifacts such as sensor noise, depth quantization, and distance or orientation of the surface within the scanner. For some popular scanners, noise is introduced along the line of sight and can be impacted by surface properties, including scattering characteristics of materials. In the presence of such noise, the typical goal of surface reconstruction algorithms is to produce a surface that passes near the points without overfitting to the noise. Robust algorithms that impose smoothness on the output \cite{PSR}, as well as methods that employ robust statistics \cite{FPPSKR}, are common ways of handling noise. We note that spatially varying noise poses a significant challenge \cite{NSRFRPS}, where for many scanners, the noise level is correlated with the depth measurement.\\
-In the work, \cite{Apss} new Point Set Surface (PSS) definition based on moving least squares (MLS) fitting of algebraic spheres is presented. The central advantages of the APSS approach compared to existing planar MLS include significantly improved stability of the projection under low sampling rates and in the presence of high curvature.\\
+The central objective is obtaining a digital representation of real-world objects, where the basic problem is to capture a 3D point cloud that samples the real world and reconstruct as much information as possible concerning the scanned objects. There exists a large number of approaches, that reconstruct surfaces from the point cloud. different algorithms make an assumption regarding the quality of the point cloud (density, noise, outliers...) on which the algorithm is supposed to perform robustly.
+
+Points that are randomly distributed near the surface are traditionally considered to be noise. The specific distribution is commonly a function of scanning artifacts such as sensor noise, depth quantization, and distance or orientation of the surface within the scanner. For some popular scanners, noise is introduced along the line of sight and can be impacted by surface properties, including scattering characteristics of materials. In the presence of such noise, the typical goal of surface reconstruction algorithms is to produce a surface that passes near the points without overfitting to the noise. Robust algorithms that impose smoothness on the output \cite{PSR}, as well as methods that employ robust statistics \cite{FPPSKR}, are common ways of handling noise. We note that spatially varying noise poses a significant challenge \cite{NSRFRPS}, where for many scanners, the noise level is correlated with the depth measurement.
+
+In the work, \cite{Apss} new Point Set Surface (PSS) definition based on moving least squares (MLS) fitting of algebraic spheres is presented. The central advantages of the APSS approach compared to existing planar MLS include significantly improved stability of the projection under low sampling rates and in the presence of high curvature.
+
 In this thesis ideas developed in \cite{Apss} will be applied directly to the SDF of the MC grid domain. As a blur level set method, the level set MLS correction method is also designed to be applied on every reconstruction approach, which in the core uses an implicit SDF ISO-surfaces for surface reconstruction. The MLS method is capable of reconstructing large and complex surfaces with millions of particles preserving small features sharp features smoothing out a flat surface area (see figure \ref{fig:mls_motivation}).
 \begin{figure}
 	\begin{center}
@@ -30,7 +34,8 @@ The core of the smoothing method is a computation of an approximated surface.
 The main idea of the computational approach was taken from the work of Guennebaud \& Gross \cite{Apss}. 
 Given a set of points $P = \{p_i \in R_d \}$, a smooth surface $S_P$ approximating $P$ using a moving least squares spherical fit to the data can be defined. However, in the case of this study, there is no set of points, that define the surface and which should be approximated. As an input, a set of points defined in the MC domain is given. 
 Although, with the MC grid vertices we also have values of the SDF, which theoretically define the distance to the surface. But in most cases, the computed SDF doesn't represent an actual distance to the surface, but just an approximation of the distance, which is more approximate in the neighborhood of the 0-level iso-surface, but does not define the distance to the surface in the more distant areas from the fluid surface. 
-However, in the 0-level intersection areas, SDF also doesn't exactly define a distance to the surface, which is one of the reasons for the occurrence of small frequency bumps on the reconstructed fluid surface. Thus applying MLS approximation to the 0-level intersection MC vertices and correcting their SDF is an attempt to reconstruct a smooth distance-based SDF.\\
+However, in the 0-level intersection areas, SDF also doesn't exactly define a distance to the surface, which is one of the reasons for the occurrence of small frequency bumps on the reconstructed fluid surface. Thus applying MLS approximation to the 0-level intersection MC vertices and correcting their SDF is an attempt to reconstruct a smooth distance-based SDF.
+
 In the APSS work analytical equation of the sphere was used as a core function, which is approximated by applying least-squares minimization to a sample set. Given a point $x$ the equation, that represents a distance to the sphere center can be defined as a function of x:
 \begin{equation}
 f(x) = s_1\cdot x^2 + s_2 \cdot x_x + s_3 \cdot x_y + s_4 \cdot x_z + s_5
@@ -46,8 +51,10 @@ In the Algorithm \ref{alg:mls_alg} each MC grid vertex in the cluster $SDF_{new}
 where $Clusters$ is a set of clusters, such that $: \forall cluster \in Clusters: x \in cluster$. 
 
 \section{Algorithm}
-The general idea of the algorithm is to extract a subset of the MC grid vertices, which are representatives of a 0-level intersection of the signed scalar field (vertices which are used for final surface mesh generation by linearly interpolating the SDF values between the neighboring vertices with different signs). For each of the extracted vertices find an appropriate neighborhood that consists of 0-level intersection vertices. This neighborhood is representative of a local area of fluid surface. Further term cluster will be used to refer to the local 0-level intersection neighborhood of an MC grid vertex.\\
-Given a generated cluster MLS surface approximation is computed and for each vertex in the cluster, SDF approximation is computed according to equation \ref{eq:sdf_approximation}. All SDF approximations computed within different clusters for one vertex is summed up and an average of the sum is a final SDF approximation for the observer vertex according to equation \ref{eq:sdf_mls_approximation_final}.\\
+The general idea of the algorithm is to extract a subset of the MC grid vertices, which are representatives of a 0-level intersection of the signed scalar field (vertices which are used for final surface mesh generation by linearly interpolating the SDF values between the neighboring vertices with different signs). For each of the extracted vertices find an appropriate neighborhood that consists of 0-level intersection vertices. This neighborhood is representative of a local area of fluid surface. Further term cluster will be used to refer to the local 0-level intersection neighborhood of an MC grid vertex.
+
+Given a generated cluster MLS surface approximation is computed and for each vertex in the cluster, SDF approximation is computed according to equation \ref{eq:sdf_approximation}. All SDF approximations computed within different clusters for one vertex are summed up and an average of the sum is a final SDF approximation for the observer vertex according to equation \ref{eq:sdf_mls_approximation_final}.
+
 In the Algorithm \ref{alg:mls_alg} general overview of the MLS smoothing filter on the MC SDF grid is described. The filter can be applied iteratively, similarly to the blur filter.
 \begin{algorithm}[H]
 	\scriptsize
@@ -74,7 +81,8 @@ In the Algorithm \ref{alg:mls_alg} general overview of the MLS smoothing filter 
 	\caption{mls smoothing filter algorithm}
 	\label{alg:mls_alg}
 \end{algorithm}
-where $oldSDF$ is a computed signed scalar field received from the underlying reconstruction method (ZhuBridson, Solenthaler, etc.), $ZeroLevelIntersectionSet$ is a set of MC grid vertices that represents a 0-level intersection area of the signed scalar field, $neighborClusters$ is a set of clusters computed for each vertex in $ZeroLevelIntersectionSet$, $surfApproximation$ is a set of unknown coefficients of the surface approximation sphere computed using WLLS method, $newSDF$ is a signed scalar field where approximated SDF values are stored, $weights$ is a buffer containing weights of each MLS value (in our case it can be interpreted as a counter of the number of times vertex appear in different clusters), $smoothingFactor$ is a coefficient which defines how much of the MLS approximation should be applied (the concept is described in details in section \ref{sec:smoothing_factor}), $fluidParticles$ is a set of counters, which contains the number of fluid particles within the support radius of MS grid vertex, $maxFluidParticles$ is a potential maximum of the fluid particles in the neighborhood of the MC grid vertex computed as $maxFluidParticles = \dfrac{supportAreaVolume}{fluidParticleVolume}$.\\
+where $oldSDF$ is a computed signed scalar field received from the underlying reconstruction method (ZhuBridson, Solenthaler, etc.), $ZeroLevelIntersectionSet$ is a set of MC grid vertices that represents a 0-level intersection area of the signed scalar field, $neighborClusters$ is a set of clusters computed for each vertex in $ZeroLevelIntersectionSet$, $surfApproximation$ is a set of unknown coefficients of the surface approximation sphere computed using WLLS method, $newSDF$ is a signed scalar field where approximated SDF values are stored, $weights$ is a buffer containing weights of each MLS value (in our case it can be interpreted as a counter of the number of times vertex appear in different clusters), $smoothingFactor$ is a coefficient which defines how much of the MLS approximation should be applied (the concept is described in details in section \ref{sec:smoothing_factor}), $fluidParticles$ is a set of counters, which contains the number of fluid particles within the support radius of MS grid vertex, $maxFluidParticles$ is a potential maximum of the fluid particles in the neighborhood of the MC grid vertex computed as $maxFluidParticles = \dfrac{supportAreaVolume}{fluidParticleVolume}$.
+
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=\textwidth]{figures/MlsIntersectionVertexSet.png}
@@ -82,13 +90,17 @@ where $oldSDF$ is a computed signed scalar field received from the underlying re
 	\caption{0-level intersection MC grid vertices. Red are vertices with positive SDF sign, blue are one with negative sign}
 	\label{fig:intersection_vertices}
 \end{figure}
-As an input, we have an old SDF, computed by the underlying reconstruction method (e.g. Muller et.al., Zhu \& Bridson, Solenthaler, etc.). The algorithm computes 0-level intersection vertices. This is required as the MLS by definition reconstructs surfaces from SDF that represents a distance to a surface (e.g. tuple $(x_p, u_p)$ is a position in space and distance to the surface). However, in the underlying reconstruction methods computed SDF does not represent the distance to a surface along with the whole domain of the MC grid. Only the SDF values of 0-level intersection vertices are assumed to be distances and, thus can be used for MLS approximation. Intersection cells are shown in the Figure \ref{fig:intersection_vertices}.\\
+As an input, we have an old SDF, computed by the underlying reconstruction method (e.g. Muller et.al., Zhu \& Bridson, Solenthaler, etc.). The algorithm computes 0-level intersection vertices. This is required as the MLS by definition reconstructs surfaces from SDF that represents a distance to a surface (e.g. tuple $(x_p, u_p)$ is a position in space and distance to the surface). However, in the underlying reconstruction methods computed SDF does not represent the distance to a surface along with the whole domain of the MC grid. Only the SDF values of 0-level intersection vertices are assumed to be distances and, thus can be used for MLS approximation. Intersection cells are shown in the Figure \ref{fig:intersection_vertices}.
 
-Another advantage of using a set of 0-level intersection vertices for MLS approximation is that the algorithm can exactly determine the set of neighbor MC vertices that lie along the reconstructed surface, without approximating the surface normal and taking approximate neighbor set along the tangential direction to the normal. Some computed clusters are represented in the Figure \ref{fig:clusters}.\\
 
-And the last important advantage is performance optimization, as there is no need to compute costly MLS approximation for each MC grid vertices in the domain.\\
+Another advantage of using a set of 0-level intersection vertices for MLS approximation is that the algorithm can exactly determine the set of neighbor MC vertices that lie along the reconstructed surface, without approximating the surface normal and taking approximate neighbor set along the tangential direction to the normal. Some computed clusters are represented in figure \ref{fig:clusters}.
 
-However, there is no guarantee that after the applying approximation the SDF sign of the MC grid vertex will not be switched, e.g. if some MC grid vertex had a positive SDF value before smoothing, after MLS approximation it can take a negative value. In this case, the set of 0-level intersection vertices set will be changed, and some of the MC grid vertices, that were not MLS smoothed will be used during the final surface generation and can bring unnecessary noise to the reconstructed surface. This issue can be worked around by applying multiple iterations of MLS smoothing trading off final surface smoothness and reconstruction performance.\\
+
+And the last important advantage is performance optimization, as there is no need to compute costly MLS approximation for each MC grid vertices in the domain.
+
+
+However, there is no guarantee that after applying approximation MLS the SDF sign of the MC grid vertex will not be switched. E.g. if some MC grid vertex had a positive SDF value before smoothing, after MLS approximation it can take a negative value. In this case, the set of 0-level intersection vertices set will be changed, and some of the MC grid vertices, that were not MLS smoothed will be used during the final surface generation and can bring unnecessary noise to the reconstructed surface. This issue can be worked around by applying multiple iterations of MLS smoothing trading off final surface smoothness and reconstruction performance.
+
 \begin{figure}[H]
 	\begin{center}
 		\begin{subfigure}[b]{0.45\textwidth}
@@ -102,9 +114,11 @@ However, there is no guarantee that after the applying approximation the SDF sig
 	\label{fig:clusters}
 \end{figure}
 
-The set of 0-level intersection vertices is split into clusters. For each cluster coefficients of MLS approximated surface is computed using the WLLS approach, and based on the obtained solution new SDF values are generated for each vertex in the cluster. As soon as vertices can appear in multiple clusters the total values are summed up and the average is computed according to equation \ref{eq:sdf_mls_approximation_final}.\\
+The set of 0-level intersection vertices is split into clusters. For each cluster coefficients of MLS approximated surface is computed using the WLLS approach, and based on the obtained solution new SDF values are generated for each vertex in the cluster. As soon as vertices can appear in multiple clusters the total values are summed up and the average is computed according to equation \ref{eq:sdf_mls_approximation_final}.
 
-For thin and small feature areas, where smoothing could destroy surface details or even introduce artifacts, the smoothing factor is computed and applied to the final MLS value as a weighted sum between the old SDF value and new MLS corrected SDF value. The smoothing factor is applied similarly to Blur filter (see section \ref{sec:smoothing_factor} for more information on detection thin areas and computation of smoothing factor).\\
+
+For thin and small feature areas, where smoothing could destroy surface details or even introduce artifacts, the smoothing factor is computed and applied to the final MLS value as a weighted sum between the old SDF value and new MLS corrected SDF value. The smoothing factor is applied similarly to Blur filter (see section \ref{sec:smoothing_factor} for more information on detection thin areas and computation of smoothing factor).
+
 
 \subsection{Clusters computation}
 For each vertex in  0-level intersection vertex-set, clusters are computed. The clusters are a set of neighbor vertices to currently observer vertex, picked from the 0-level intersection vertices set, which will be used to compute an MLS approximation. The Algorithm \ref{alg:computeClusters} describes the procedure of clusters generation.
@@ -126,10 +140,14 @@ For each vertex in  0-level intersection vertex-set, clusters are computed. The 
 	\caption{mls clusters computation}
 	\label{alg:computeClusters}
 \end{algorithm}
-where $ZeroLevelIntersectionSet$ is a previously computed set of MC grid vertices that are in the neighborhood of the 0-level of the signed scalar field, $FluidParticleDiameter$ is a diameter of a SPH fluid particles, $FluidParticlesInCurvatureRadius$ is a number of particles that can fit in a mean curvature radius (more explanations later), $MlsSamples$ - user defined maximum number of neighbor vertices in the cluster.\\
-An important role in the MLS approximation takes a number of samples in the cluster. The more samples will be used the more smoothing will be applied to the vertices. Thus as a general rule of thumb, the more curvy and detailed surface in the area of interest the fewer samples should be used for MLS approximation. This also gives a performance optimization during the computation of unknown coefficients of the approximation sphere.\\
-Before the algorithm iterates over the vertices in the 0-level intersection set, they are sampled in separate storage $vertices$ (for the motivation and more details see section \ref{sec:clusterDencityFactor}). In the meantime unchanged set of $ZeroLevelIntersectionSet$ is to be used in the neighborhood search algorithm for clusters. This step adds a trade-off between the reconstruction runtime and surface quality.\\
-Next, the curvature of the currently processed vertex is computed. To save sharp features of the fluid surface it was decided to decrease the number of samples in clusters with high curvature of the central vertex in the area. Based on the mean curvature of the current 0-level intersection vertex number of samples in the cluster is computed, which is a fraction [1, MlsSamples]. The fewer samples are in the neighborhood the smaller the difference between the original and approximated SDF, which is exactly what is intended for areas of the fluid with splashes or waves on the surface.\\
+where $ZeroLevelIntersectionSet$ is a previously computed set of MC grid vertices that are in the neighborhood of the 0-level of the signed scalar field, $FluidParticleDiameter$ is a diameter of a SPH fluid particles, $FluidParticlesInCurvatureRadius$ is a number of particles that can fit in a mean curvature radius (more explanations later), $MlsSamples$ - user defined maximum number of neighbor vertices in the cluster.
+
+An important role in the MLS approximation takes a number of samples in the cluster. The more samples will be used the more smoothing will be applied to the vertices. Thus as a general rule of thumb, the more curvy and detailed surface in the area of interest the fewer samples should be used for MLS approximation. This also gives a performance optimization during the computation of unknown coefficients of the approximation sphere.
+
+Before the algorithm iterates over the vertices in the 0-level intersection set, they are sampled in separate storage $vertices$ (for the motivation and more details see section \ref{sec:clusterDencityFactor}). In the meantime unchanged set of $ZeroLevelIntersectionSet$ is to be used in the neighborhood search algorithm for clusters. This step adds a trade-off between the reconstruction runtime and surface quality.
+
+Next, the curvature of the currently processed vertex is computed. To save sharp features of the fluid surface it was decided to decrease the number of samples in clusters with high curvature of the central vertex in the area. Based on the mean curvature of the current 0-level intersection vertex number of samples in the cluster is computed, which is a fraction [1, MlsSamples]. The fewer samples are in the neighborhood the smaller the difference between the original and approximated SDF, which is exactly what is intended for areas of the fluid with splashes or waves on the surface.
+
 The curvature is computed using the method described in \cite{CurvatureComputation}. First of all, compute the curvature for each surface particle that resides in this cell with the help of its neighboring particles as:
 \begin{equation}
 	c_i = \sum_j{(1 - n_i \cdot n_j)\cdot k_c(x_i-x_j, h)}
@@ -177,7 +195,8 @@ Neighbors detection is described in pseudo-code of Algorithm \ref{alg:mls_nbsear
 	\caption{MLS MC vertex neighbors search}
 	\label{alg:mls_nbsearch}
 \end{algorithm}
-As an input procedure receives a $BaseMcVertex$ - a MC vertex for which neighborhood cluster is computed, $ZeroLevelIntersectionSet$ - 0-level intersection MC vertices explained previously, $SelectedIndices$ - a set of indexes of neighbors, that should be accepted as a samples (more explanations are in the next section). The nearest neighbors of $currentMcVertex$ can be seen on the figure \ref{fig:MCgridNearestNeighbors}.\\
+As an input procedure receives a $BaseMcVertex$ - an MC vertex for which neighborhood cluster is computed, $ZeroLevelIntersectionSet$ - 0-level intersection MC vertices explained previously, $SelectedIndices$ - a set of indexes of neighbors, that should be accepted (more explanations are in the next section). The nearest neighbors of $currentMcVertex$ can be seen on the figure \ref{fig:MCgridNearestNeighbors}.
+
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.1\textwidth]{figures/nearestNeighbors.png}
@@ -185,7 +204,8 @@ As an input procedure receives a $BaseMcVertex$ - a MC vertex for which neighbor
 	\caption{Nearest neighbors (blue) of the reference (red) MC grid vertex (2D example) } \label{fig:MCgridNearestNeighbors}
 \end{figure}
 
-The procedure returns a set of MC grid vertices, that are in the nearest neighborhood within a requested $BaseMcVertex$, and which are in a $ZeroLevelIntersectionSet$ set. The computed array has some important properties, that will be exploited further. First of all, the further the neighbor is from the base cell the higher index it has inside the array. Figure \ref{fig:mls_neighbor_alignment} shows the example of alignment of detected cluster neighbors in the set of 0-level intersection vertices.\\
+The procedure returns a set of MC grid vertices, that are in the nearest neighborhood within a requested $BaseMcVertex$, and which are in a $ZeroLevelIntersectionSet$ set. The computed array has some important properties, that will be exploited further. First of all, the further the neighbor is from the base cell the higher index it has inside the array. Figure \ref{fig:mls_neighbor_alignment} shows the example of alignment of detected cluster neighbors in the set of 0-level intersection vertices.
+
 \begin{figure}[h]
 	\begin{center}
 		\includegraphics[width=0.7\textwidth]{figures/MlsSamplesBufferAlignment.png}
@@ -217,11 +237,12 @@ The final neighborhood is formed as an area of MC vertices along the 0-level iso
 \end{figure}
 Thus modifying the amount of MLS samples influences the final surface quality as well as reconstruction time. 
 \subsection{Algorithm optimizations}
-In the general complexity of the MLS, the smoothing algorithm has a $O(n \cdot m)$, where $m$ is the number of MLS samples and $n$ is a number of 0-level intersection vertices. However, without sacrificing the smoothing quality the subsets of $m$ and $n$ can be picked to perform MLS approximation. The next sections will describe a technique that reduces the number of samples and vertices for which MLS approximation is performed 
+The general complexity of the MLS smoothing algorithm has a $O(n \cdot m)$, where $m$ is the number of MLS samples and $n$ is a number of 0-level intersection vertices. However, without sacrificing the smoothing quality the subsets of $m$ and $n$ can be sampled to perform MLS approximation. The next sections will describe a technique that reduces the number of samples and vertices for which MLS approximation.
 \subsubsection{SelectedIndices}
 
-To receive a smooth surface it is required to use a large amount of MLS samples in the neighborhood as was already shown in the previous section. Thus it requires a lot of computational efforts, to generate approximated MLS surface and to correct SDF of 0-level vertices. Thus to reduce reconstruction time it was decided to apply the Monte Carlo approach to pick a representative subset of samples from the neighborhood cluster, which uniformly represents the initially computed set. The hope is that distribution will detect correctly so that the final surface quality will not be degraded too much and the computation time of the reconstruction phase will be reduced without introducing artifacts into the final fluid surface.\\
-The first idea that comes to mind is just uniformly picking $n$ samples from the computed MLS sample buffer (see figure \ref{fig:mls_neighbor_alignment}). But for our needs, it is more appropriate to pick samples uniformly from each distance level from the reference sample (the central one). Figure \ref{fig:samples_distribution} shows the example of the uniformly distributed samples over distance levels.
+To receive a smooth surface it is required to use a large amount of MLS samples in the neighborhood as was already shown in the previous section. Thus it requires a lot of computational efforts, to generate approximated MLS surface and to correct SDF of 0-level vertices. Thus to reduce reconstruction time it was decided to apply the Monte Carlo approach to pick a representative subset of samples from the neighborhood cluster, which uniformly represents the initially computed set. The hope is that distribution will be detected correctly so that the final surface quality will not be degraded and the computation time of the reconstruction phase will be reduced without introducing artifacts into the final fluid surface.
+
+The first idea that comes to mind is just uniformly picking $n$ samples from the computed MLS sample buffer (see figure \ref{fig:mls_neighbor_alignment}). But for our needs, it is more appropriate to pick samples uniformly from each distance level within the reference sample (the central one). Figure \ref{fig:samples_distribution} shows the example of the uniformly distributed samples over distance levels and over the whole domain. By uniform sampling over distance levels, it is meant that equivalent number of samples picked on each distance from the reference vertex.
 \begin{figure}
 	\begin{center}
 		\begin{subfigure}[b]{0.48\textwidth}
@@ -238,13 +259,12 @@ The first idea that comes to mind is just uniformly picking $n$ samples from the
 	\label{fig:samples_distribution}
 \end{figure}
 
-The probability of picking samples far away from the base sample is larger than the probability of picking the samples near the base cell, e.g. (for simplicity circle will be used to show the probability distribution) the density function of picking an arbitrary point, that lies in radius $r$ from the current point is shown in equation \ref{eq:probability_distr}.
+The probability of picking samples far away from the base sample is larger than the probability of picking the samples near the base cell. For example(for simplicity circle will be used to show the probability distribution), the density function of picking an arbitrary point, that lies in radius $r$ from the current point is shown in equation \ref{eq:probability_distr}.
 \begin{equation}
 	p(r) = \dfrac{2 \cdot \pi r}{\pi \cdot R^2} = \dfrac{2 \cdot r}{R^2}
 	\label{eq:probability_distr}
 \end{equation}
-where $R$ is a radius to the sphere (distance to the outer distance level from reference point). In another words talking the probability of picking sample on that lies from the central sample in a distance of $r$ is equal to length of the inner circle with radius $r$ divided by the area of the sphere.
-Thus to pick samples from the buffer uniformly w.r.t. the distance level from the central sample we have to modify the probability distribution of picking a samples from buffer. Next procedure is applied to pick the sample indexes from the buffer uniformly w.r.t. the distance level:
+where $R$ is a radius to the sphere (distance to the outer distance level from reference point). In another words, the probability of picking sample that lies within the central sample in a distance of $r$ is equal to length of the inner circle with radius $r$ divided by the area of the sphere. Thus to pick samples from the buffer uniformly w.r.t. the distance from the central sample we have to modify the probability distribution of picking a samples from buffer. Next procedure is applied to pick the sample indexes from the buffer uniformly w.r.t. the distance level:
 \begin{algorithm}[H]
 	\scriptsize
 	\begin{algorithmic}
@@ -283,7 +303,8 @@ Thus to pick samples from the buffer uniformly w.r.t. the distance level from th
 	\caption{random sampling of indices's in the MLS neighborhood}
 	\label{alg:mls_montecarlo_sampling}
 \end{algorithm}
-The idea of the algorithm is to generate a set of indexes from a domain of the MLS neighborhood buffer, and after that shift, the index to the beginning according to quadratic function $x^2$ where $x\in [0,1]$ is uniformly at the randomly generated position in the array. This way the probability distribution of picking a sample from a specific distance from the center of the area will be compensated and converge to a uniform distribution. Figure \ref{fig:distributions} shows the distributions of sampling indexes before quadratic shifting (uniformly pick the index of the buffer) and after (pick index uniformly and shift it according to the $x^2$ function).\\
+The idea of the algorithm is to generate a set of indexes from a domain of the MLS neighborhood buffer one by one and shift each of the indexes to the beginning according to quadratic function $x^2$. Here $x\in [0,1]$ is a random variable that represents the relative position of the index in the buffer. This way the probability distribution of picking a sample from a specific distance from the center of the area will be compensated and converge to a uniform distribution. Figure \ref{fig:distributions} shows the distributions of sampling indexes before quadratic shifting (uniformly pick the index of the buffer) and after (pick index uniformly and shift it according to the $x^2$ function).
+
 \begin{figure}
 	\begin{tikzpicture}
 		\begin{axis}
@@ -337,7 +358,8 @@ where $x$ is a probability of picking sample on distance level $i$ from the cent
 	\end{center}
 	\caption{sampling of MLS neighbor vertices set} \label{fig:cluster_sampled}
 \end{figure}
-In the quadratic shift sampling approach most of the samples are concentrated in the center of the cluster, thus compensating the number of samples, that are far away from the center and that are near to the center. In the uniform approach samples are spread along the whole area. Figure \ref{fig:cluster_sampled} shows the cluster, with different sampling types.\\
+In the quadratic shift sampling approach most of the samples are concentrated in the center of the cluster, thus compensating the number of samples, that are far away from the center and that are near to the center. In the uniform approach samples are spread along the whole area. Figure \ref{fig:cluster_sampled} shows the cluster, with different sampling types.
+
 In Figure \ref{fig:surface_sampling_results} some examples of reconstructed scenes using sampled subset of neighbor vertices is shown.
 \begin{figure}
 	\begin{center}
@@ -356,10 +378,11 @@ In Figure \ref{fig:surface_sampling_results} some examples of reconstructed scen
 	\end{center}
 	\caption{Reconstructed MLS surface} \label{fig:surface_sampling_results}
 \end{figure}
-Both, full samples set and partial samples set removes bumps from the original surface, but for the reconstruction with $\dfrac{1}{4}$ set of MLS samples small frequency noise can be seen on the corner areas.\\
+Both, full samples set and partial samples set removes bumps from the original surface, but for the reconstruction with $\dfrac{1}{4}$ set of MLS samples small frequency noise can be seen on the corner areas.
+
 
 \subsubsection{Clusters density factor} \label{sec:clusterDencityFactor}
-According to the algorithm \ref{alg:mls_alg} clusters are computed for each 0-level intersection cell, and after this MLS approximation is applied to each intersection cell in the cluster. This means that each 0-level intersection MC vertex takes part in multiple clusters during the MLS approximation. However, for fluid surface smoothing it is enough to generate clusters only for a subset of the 0-level intersection cells such that depending on the size of the cluster all 0-level intersection vertices will be MLS corrected. For example see figure \ref{fig:mls_clusters_sparse_generations}:
+According to the algorithm \ref{alg:mls_alg} clusters are computed for each 0-level intersection vertex. After clusters are computed MLS approximation is applied to each 0-level intersection vertex in the cluster. This means that each 0-level intersection MC vertex takes part in multiple clusters during the MLS approximation. However, for fluid surface smoothing it is enough to generate clusters only for a subset of the 0-level intersection cells such that depending on the size of the cluster all 0-level intersection vertices will be MLS corrected. For example see figure \ref{fig:mls_clusters_sparse_generations}:
 \begin{figure}[h]
 	\begin{center}
 		\begin{subfigure}[b]{0.4\textwidth}
@@ -419,7 +442,7 @@ In the Algorithm \ref{alg:mls_alg} it is stated that only computed 0-level inter
 	\caption{Subset of 0-level intersection MC grid vertices with SDF values before and after MLS smoothing. Red are vertices with positive SDF valuations, blue are vertices with negative SDF value.} 
 	\label{fig:mls_iterations}
 \end{figure}
-After application of MLS it can be seen on the picture, that some MC grid vertices changed their SDF sign from negative to positive (Figure \ref{fig:mls_1_iter}). After 3 iterations of MLS filter smoothing the effect of the SDF sign switch is applied to a smaller subset of MC grid vertices (Figure \ref{fig:mls_3_iter}). This can be explained by the convergence of the surface to some invariant state since each iteration the average standard deviation of SDF values before and after the application of MLS among all clusters gradually decreases and converges to 0 (see figure \ref{fig:mls_std_dev}).
+After application of MLS, it can be seen on the picture, that some MC grid vertices changed their SDF signedness (Figure \ref{fig:mls_1_iter}). After 3 iterations of MLS filter smoothing the effect of the SDF sign switch is applied to a smaller subset of MC grid vertices (Figure \ref{fig:mls_3_iter}). This can be explained by the convergence of the surface to some invariant state since after each iteration the average standard deviation of SDF values before and after the application of MLS among all clusters gradually decreases and converges to 0 (see figure \ref{fig:mls_std_dev}).
 \begin{figure}[h]
 	\begin{center}
 		\begin{tikzpicture}
@@ -503,7 +526,8 @@ There are some examples of reconstructed surface shown in the Figure \ref{fig:ml
 The more iterations are applied for the MLS correction the smoother surface we receive. However, most of the smoothing work is done during the first two or three iterations. The Sum of squared errors falls very fast during the first two iterations and stays on the same level after the following iterations (see figure \ref{fig:mls_std_dev}), which means that there is not much smoothing applied to the level set. Meantime, according to the figure \ref{fig:mls_surf_iter_examples} a large amount of iteration can destroy tiny fluid features, such as splashes and thin areas near the border of the fluid surface. This can be controlled via calibration of the smoothing factor, but for the purpose of this thesis, removal of small frequency bumps on the reconstructed surface, one iteration is enough in most cases.
 
 \section{Performance analysis}
-The performance of the MLS smoothing filter will be measured w.r.t. the number of MlsSamples, MaxMlsSamples, number of iterations. All measurements were performed on the AMD Ryzen 5 3550H. For transparent algorithm evaluation, all computations were performed on a single processor. All evaluations are displayed in seconds. Reconstruction was performed on the 2 frames of the fluid scene with 40000 SPH particles. Note that in the MLS reconstructions $updateLevelSet$ is a total of underlying methods initial $updateLevelSet$ and $mlsSmoothPath$ applied on top of that.\\
+The performance of the MLS smoothing filter will be measured w.r.t. the number of MlsSamples, MaxMlsSamples, number of iterations. All measurements were performed on the AMD Ryzen 5 3550H. For transparent algorithm evaluation, all computations were performed on a single processor. All evaluations are displayed in seconds. Reconstruction was performed on the 2 frames of the fluid scene with 40000 SPH particles. Note that in the MLS reconstructions $updateLevelSet$ is a total of underlying methods initial $updateLevelSet$ and $mlsSmoothPath$ applied on top of that.
+
 Table \ref{tab:mls_initial_method} shows the evaluated performance density based reconstruction method.
 \begin{table}[H]
 	\begin{center}
@@ -613,7 +637,8 @@ Table \ref{tab:cluster_factor} shows evaluated performance of the MLS filter dep
 In general, all parameters show linear time expansion on the reconstruction time for $mlsSmoothPath$ stage.
 
 \section{Surface reconstruction results}
-In this section some scenes representing the quality of the filter and reconstructed surface are shown. All simulations was generated using a SPlisHSPlasH framework \cite{SPlisHSPlasH}.\\
+In this section, some scenes representing the quality of the filter and reconstructed surface are shown. All simulations was generated using a SPlisHSPlasH framework \cite{SPlisHSPlasH}.
+
 Figure \ref{fig:db_mls_reconstruction1} and \ref{fig:db_mls_reconstruction2} shows the reconstructed surface using density based Muller et.al. method. 
 \begin{figure}
 	\begin{center}
@@ -656,7 +681,8 @@ Figure \ref{fig:db_mls_reconstruction1} and \ref{fig:db_mls_reconstruction2} sho
 	\end{center}
 	\caption{Original density based surface with MLS smoothed surface comparison} \label{fig:db_mls_reconstruction2}
 \end{figure}
-On Figures \ref{fig:db_mls_reconstruction3} and \ref{fig:db_mls_reconstruction4} surface reconstruction of canyon scene is presented.\\
+On Figures \ref{fig:db_mls_reconstruction3} and \ref{fig:db_mls_reconstruction4} surface reconstruction of canyon scene is presented.
+
 Most of the high-frequency bumps are smoothed. The final surfaces still preserve sharp features, however, some small details are smoothed out such as in figure \ref{fig:canion_small_features}. To achieve good smoothing results it is required to set up enough MLS samples in the neighborhood of each MC grid vertex, thus the computation time is significantly increased w.r.t. to the original reconstruction method e.g. the crown scene reconstructed with original Muller et.al. took ~10 seconds per frame (figure \ref{fig:crown_zb}), application of MLS smoothing on top of the generated SDF brought additionally ~20 seconds to achieve smooth surface preserving tiny and sharp features (figure \ref{fig:crown_zb_mls}) 
 
 \begin{figure}
@@ -739,6 +765,9 @@ Most of the high-frequency bumps are smoothed. The final surfaces still preserve
 
 
 \section{Conclusion and Future Work}
-Mls smoothing filter is proven to be a good alternative to blur filter. The MLS filter is much more stable than the blur filter. As was already shown iterative application of the method converges to some defined surface. Iterative application of the MLS filter doesn't destroy continuous areas of the surface. The filter could be configured so, that small features, such that droplets or splashes in the reconstructed scene could be preserved, in the meantime undesired bumps are removed.\\
-However, the most negative disadvantage of applying the MLS filter is its computation time. The total complexity of the algorithm is $O(n*m)$, where $n$ is a set of 0-level intersection cells and $m$ is a set of MlsSamples. By applying Monte Carlo approaches it is possible to uniformly sample $N \subseteq n$ and $M \subseteq m$, such that the total execution time of the reconstruction could be reduced, not sacrificing too much the final quality of the reconstructed surface.\\
-The future work can be applied to massively parallelize the algorithm so that it can be run on the HPC clusters, or even port the computations on the GPU. In this work, OpenMP injections were applied to parallelize all stages of the reconstruction algorithms as well as reconstruction algorithms. However, the current implementation contains a lot of data dependencies, which limits the scalability of the algorithm on massively parallel systems like GPGPU's.\\ Another way the algorithm can be used is the generation of a dataset, which can be used as a training set for a deep multi-output regression neural network analogically to \cite{DNNNoiseFilter}.
+Mls smoothing filter is proven to be a good alternative to blur filter. The MLS filter is much more stable than the blur filter. As was already shown iterative application of the method converges to some defined surface. Iterative application of the MLS filter doesn't destroy continuous areas of the surface. The filter could be configured to preserve small features (droplets and splashes) but remove bumps on flat surface areas.
+
+However, the most negative disadvantage of applying the MLS filter is its computation time. The total complexity of the algorithm is $O(n*m)$, where $n$ is a set of 0-level intersection cells and $m$ is a set of MlsSamples. By applying Monte Carlo approaches it is possible to uniformly sample $N \subseteq n$ and $M \subseteq m$, such that the total execution time of the reconstruction could be reduced, without sacrificing the final quality of a reconstructed surface.
+
+The future work can be applied to massively parallelize the algorithm so that it can be run on the HPC clusters, or even port the computations on the GPU. In this work, OpenMP injections were applied to parallelize all stages of the reconstruction algorithms as well as reconstruction algorithms. However, the current implementation contains a lot of data dependencies, which limits the scalability of the algorithm on massively parallel systems like GPGPU's.
+ Another way the algorithm can be used is the generation of a dataset, which can be used as a training set for a deep multi-output regression neural network analogically to \cite{DNNNoiseFilter}.

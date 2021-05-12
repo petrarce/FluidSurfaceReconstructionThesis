@@ -1,7 +1,7 @@
 \chapter{Research framework}
-All fluid surface reconstruction methods described in section \ref{sec:related-work} are based on signed scalar field techniques for surface extraction. Given fluid particle displacement, density, and other SPH information these methods are computing scalar signed field (sometimes referred to as signed distance field (SDF)) values for defined 3D grid vertices domain known as Marching cubes domain. After computation of the SDF values on the grid apply the marching cubes algorithm is applied to calculate surface mesh.\\\
-Smoothing algorithms, proposed in this thesis are designed in the way that they can be applied to the reconstruction algorithms with the described infrastructure.
+All fluid surface reconstruction methods described in section \ref{sec:related-work} are based on signed scalar field techniques for surface extraction. Given fluid particle displacement, density, and other SPH information these methods are computing scalar signed field (sometimes referred to as signed distance field (SDF)) values for defined 3D grid vertices domain known as Marching cubes domain. After computation of the SDF values on the grid apply the marching cubes algorithm is applied to calculate surface mesh.
 
+Smoothing algorithms, proposed in this thesis are designed in the way that they can be applied to the reconstruction algorithms with the described infrastructure.
 
 In this work the following methods were implemented for surface reconstruction:
 \begin{itemize}
@@ -11,8 +11,6 @@ In this work the following methods were implemented for surface reconstruction:
   \item \emph{Onderik et. al.}, proposed in \cite{OnderikEtAl}.
 \end{itemize}
 All methods use surface extraction computing SDF and extracting the surface mesh using the MC algorithm. The main difference is the way the SDF is defined (see section \ref{sec:related-work}).
-
-
 
 \section{Framework architecture}
 To simplify further framework development and testing special care was applied to design the class hierarchy. The class diagram is presented in Figure \ref{fig:class-diagam}.
@@ -25,6 +23,7 @@ To simplify further framework development and testing special care was applied t
     \label{fig:class-diagam}
 \end{figure}
 The base class for all reconstruction methods is \emph{MarchingCubes} class. This class contains common properties for all methods, which exploits the Marching Cubes algorithm. Here \emph{mcDomain} is a pair of two points, representing the domain of marching cubes in 3d space, \emph{dimensions} - is a vector, containing a number of MC grid cells in X, Y, and Z directions, \emph{gridResolution} - the size of each cell (all cells are assumed to be of a uniform size where $width=length=height$), \emph{mcCells} - is a hash table which contains key-value pairs of cell index and a number of SPH fluid particles within its support radius. Each MC cell vertex has its unique integer index, which can be transformed from its position in 3d space. The transformations are extensively explained in \cite{Akinchi}. 
+
 The \emph{MarchingCubes} class has 4 virtual methods, which should be reimplemented inside each subclass:
 \begin{itemize}
 	\item \emph{computeSurfaceParticles()} - computes color field and detects SPH particles that are resided near the fluid surface.
@@ -32,7 +31,6 @@ The \emph{MarchingCubes} class has 4 virtual methods, which should be reimplemen
 	\item \emph{updateGrid()} - computes the MC greed domain where calculation of SDF will be performed.
 	\item \emph{updateLevelSet()} - calculates SDF values for each MC grid vertex. All smoothing algorithms described here are incorporated in this function and are applied on top of the SDF calculated by underlying method 
 \end{itemize}
-
 \emph{MarchingCubes} class re-implements interface method \emph{generateMesh()} composing previously defined functions (see Algorithm \ref{alg:generateMesh}).
 
 \begin{algorithm}
@@ -50,6 +48,7 @@ The \emph{MarchingCubes} class has 4 virtual methods, which should be reimplemen
 \end{algorithm}
 
 \section{Adaptive hash tables for Marching Cubes grid}
+
 As presented in \cite{Akinchi} the computation time for extracting smooth surfaces is mainly influenced by the resolution of the Marching Cubes grid and the smoothing radius R. Achieving high-quality surfaces is possible at the expense of performance. One of the main causes of this issue is computing the scalar field over the volume of the fluid instead of concentrating on the surface area. Thus for performance and memory optimization reasons we decided to apply suggestions, proposed in \cite{Akinchi}.
 
 The first step is to determine the MC grid domain, on which all computation operations will be performed. To perform fluid surface reconstruction it is enough to compute SDF for MC grid cells that are near the fluid surface. To compute these cells next steps are applied:

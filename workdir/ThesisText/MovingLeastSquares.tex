@@ -1,8 +1,10 @@
 \chapter{Moving least squares}
-In this section concept of the Moving Least Squares (MLS) will be described. The MLS approximation was introduced in an early paper by Lancaster and Salkauskas  \cite{MLSSalkauskas} in 1981 with special cases going back to McLain  \cite{MLSMcLain1}, \cite{MLSMcLain2} in 1974 and 1976. Since in MLS one writes the value of the unknown function in terms of scattered data, it can be used as an approximation to span the trial space in meshless (or meshfree) methods. This approximation has found many applications in curve fitting and numerical solutions of partial differential equations.\\
+In this section concept of the Moving Least Squares (MLS) will be described. The MLS approximation was introduced in an early paper by Lancaster and Salkauskas  \cite{MLSSalkauskas} in 1981 with special cases going back to McLain  \cite{MLSMcLain1}, \cite{MLSMcLain2} in 1974 and 1976. Since in MLS one writes the value of the unknown function in terms of scattered data, it can be used as an approximation to span the trial space in meshless (or meshfree) methods. This approximation has found many applications in curve fitting and numerical solutions of partial differential equations.
+
 Most of the theoretical material was taken from \cite{MLSIntro}.
 \section{Global least squares}
-\textbf{Problem domain.} Given a points $X = [x_1, ..., x_n]$. The goal is to fit a point cloud to some geometric surface e.g. sphere. Suppose, that we are given a values of $u(X) = [u_1, ..., u_n]$ and the values are biased, e.g. $u_i + \varepsilon = u(x_i)$ and the function $u(x)$ is unknown.\\ 
+\textbf{Problem domain.} Given a points $X = [x_1, ..., x_n]$. The goal is to fit a point cloud to some geometric surface e.g. sphere. Suppose, that we are given a values of $u(X) = [u_1, ..., u_n]$ and the values are biased, e.g. $u_i + \varepsilon = u(x_i)$ and the function $u(x)$ is unknown.
+
 The idea of a Global Least Squares (GLS) technique is to reconstruct $u(x)$ so that for all $|u_i - u(x_i)|$ is minimal, that is:
 \begin{equation}
 	argmin(\sum_i (u_i - u(x_i))^2)
@@ -31,7 +33,8 @@ Taking all partial derivatives over $c_j$ the set of equations can be generated 
 	\sum_i{b_3(x_i) \cdot (\sum_j{b_j(x_i)\cdot c_j})}  &= \sum_i {b_3(x_i) \cdot u_i}\\
 	...\\
 	\sum_i{b_m(x_i) \cdot (\sum_j{b_j(x_i)\cdot c_j})}  &= \sum_i {b_m(x_i) \cdot u_i}\\
-\end{matrix}$\\
+\end{matrix}$.
+
 This is a linear system with m equations and m unknown $c_j$`s. Thus it can be reformulated into a matrix form
 \begin{equation}
  B \cdot B^T \cdot c  = B\cdot u
@@ -55,7 +58,8 @@ where $B =
 	c_2\\
 	...\\
 	c_m
-\end{pmatrix}$ are the unknown coefficients of the searched function. Thus the solution of \textbf{c} can be retrieved by solving a linear system formulated by the matrix equation \ref{eq:matrEquation}.\\
+\end{pmatrix}$ are the unknown coefficients of the searched function. Thus the solution of \textbf{c} can be retrieved by solving a linear system formulated by the matrix equation \ref{eq:matrEquation}.
+
 Having obtained the coefficients \textbf{c}, we can then compute the value of the function at any point $x$ in the domain using the equation for $u(x)$ . This analysis is substantially unchanged in higher dimensions. An example of a global least squares fit is shown in Figure \ref{fig:gls_example}.
 \begin{figure}[h]
 	\begin{center}
@@ -80,14 +84,17 @@ $W = \begin{pmatrix}
 	...\\
 	0 	& 0 	& ... & w_n\\
 \end{pmatrix}$\\
-with $W_{i,i} = w_i$. Figure \ref{fig:gls_example} shows an example of a weighted global least-squares approximation.\\
+with $W_{i,i} = w_i$. Figure \ref{fig:gls_example} shows an example of a weighted global least-squares approximation.
+
 The solution is obtained by solving equation \ref{WGLS_SLAU}
 \begin{equation}
 	c = (B^TWB)^{-1}\cdot B^TWu \label{WGLS_SLAU}
 \end{equation}
 \section{Weighted Local Least Squares}
-In global least-squares fitting, we assumed that the function represented by the data can be accurately captured by a single polynomial spanning the entire domain. For large, complex data sets, however, this would require to fit a polynomial of an impractically high order, and even then it may not capture all the features of the data. So instead of a global solution, a better picture of the solution can be obtained by fitting lower order polynomials to each data point $(x_p, u_p)$ and its neighbors. Thus there are N least-squares fits $u_i(x)$ , each one approximating the solution at point $x_i$ and the coefficient vector $c_i$ is different at each point.\\
-The approximate solution for point $x_p$ is evaluated through $R^{WLLS}_p = \sum_i^N w_{pi} \cdot (u_i - u(x_i))^2$, where $i\in [1, N]$ are neighbors of $x_p$. The gradient is expanded to matrix equation: $B^T W_p Bc_p = B_p^T W_p u$.\\
+In global least-squares fitting, we assumed that the function represented by the data can be accurately captured by a single polynomial spanning the entire domain. For large, complex data sets, however, this would require to fit a polynomial of an impractically high order, and even then it may not capture all the features of the data. So instead of a global solution, a better picture of the solution can be obtained by fitting lower order polynomials to each data point $(x_p, u_p)$ and its neighbors. Thus there are N least-squares fits $u_i(x)$ , each one approximating the solution at point $x_i$ and the coefficient vector $c_i$ is different at each point.
+
+The approximate solution for point $x_p$ is evaluated through $R^{WLLS}_p = \sum_i^N w_{pi} \cdot (u_i - u(x_i))^2$, where $i\in [1, N]$ are neighbors of $x_p$. The gradient is expanded to matrix equation: $B^T W_p Bc_p = B_p^T W_p u$.
+
 \begin{figure}[H]
 	\begin{center}
 		\includegraphics[width=0.7\textwidth]{figures/WLLS.png}
